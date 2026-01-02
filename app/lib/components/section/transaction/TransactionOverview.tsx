@@ -46,7 +46,10 @@ export default function TransactionOverview() {
   return (
     <div className="flex max-lg:flex-wrap gap-6 justify-between">
       {summary.map((item) => (
-        <div className="shadow-lg w-full p-6 rounded-lg" key={item.label}>
+        <div
+          className="shadow-lg border border-neutral-100 w-full p-6 rounded-lg"
+          key={item.label}
+        >
           <div className="pt-6 flex items-center justify-between">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">{item.label}</p>
