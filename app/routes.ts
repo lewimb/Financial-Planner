@@ -14,6 +14,7 @@ export default [
     layout("./routes/auth/layout.tsx", [
       index("./routes/auth/dashboard.tsx"),
       route("/transactions", "./routes/auth/transactions.tsx"),
+      route("/budgets", "./routes/auth/budgets.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;
