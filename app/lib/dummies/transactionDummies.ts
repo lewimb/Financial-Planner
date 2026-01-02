@@ -1,0 +1,58 @@
+import type { Transaction } from "../components/section/transaction/TransactionColumns";
+
+export const transactions: Transaction[] = [
+  {
+    id: 1,
+    description: "Salary Deposit",
+    category: "Salary",
+    date: "2024-06-01",
+    account: "Main Checking",
+    amount: 5420.0,
+    type: "income",
+  },
+  {
+    id: 2,
+    description: "Whole Foods Market",
+    category: "Food & Dining",
+    date: "2024-06-03",
+    account: "Credit Card",
+    amount: -85.5,
+    type: "expense",
+  },
+  {
+    id: 3,
+    description: "Shell Gas Station",
+    category: "Transportation",
+    date: "2024-06-05",
+    account: "Main Checking",
+    amount: -45.0,
+    type: "expense",
+  },
+  {
+    id: 4,
+    description: "Freelance Design Project",
+    category: "Freelance",
+    date: "2024-06-07",
+    account: "Main Checking",
+    amount: 850.0,
+    type: "income",
+  },
+  {
+    id: 5,
+    description: "Netflix Subscription",
+    category: "Entertainment",
+    date: "2024-06-08",
+    account: "Credit Card",
+    amount: -15.99,
+    type: "expense",
+  },
+  {
+    id: 6,
+    description: "Amazon Purchase",
+    category: "Shopping",
+    date: "2024-06-10",
+    account: "Credit Card",
+    amount: -124.99,
+    type: "expense",
+  },
+];
