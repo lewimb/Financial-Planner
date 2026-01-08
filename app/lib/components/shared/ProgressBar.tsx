@@ -1,19 +1,28 @@
+import { cn } from "~/lib/utils";
+interface ProgresBarProps {
+  start: number;
+  limit: number;
+  startingColor?: string;
+  endingColor?: string;
+  className?: string;
+}
+
 export default function ProgressBar({
   start,
   limit,
-}: {
-  start: number;
-  limit: number;
-}) {
+  startingColor = "#000000",
+  endingColor = "#D3D3D3",
+  className,
+}: ProgresBarProps) {
   const percent = Math.min((start / limit) * 100, 100);
   return (
     <div
-      className="h-2 w-full rounded-lg"
+      className={cn("h-2 w-full rounded-lg", className)}
       style={{
         background: `linear-gradient(
         to right,
-        #000000 ${percent}%,
-        #D3D3D3 ${percent}%
+        ${startingColor} ${percent}%,
+        ${endingColor} ${percent}%
       )`,
       }}
     />
