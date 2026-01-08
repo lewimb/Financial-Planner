@@ -14,7 +14,7 @@ export function Modal({ label, children, className }: DialogProps) {
       <DialogTrigger asChild>
         <Button>{label}</Button>
       </DialogTrigger>
-      <DialogContent className={cn(className, "sm:max-w-md", className)}>
+      <DialogContent className={cn(className, "", className)}>
         {children}
       </DialogContent>
     </Dialog>
