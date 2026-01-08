@@ -15,6 +15,7 @@ interface Item {
 
 interface SelectProps {
   placeholder: string;
+  id?: string;
   items: Item[];
   className?: string;
 }
@@ -22,11 +23,12 @@ interface SelectProps {
 export default function SharedSelect({
   placeholder,
   items,
+  id,
   className,
 }: SelectProps) {
   return (
     <Select>
-      <SelectTrigger className={cn("w-full", className)}>
+      <SelectTrigger id={id} className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
