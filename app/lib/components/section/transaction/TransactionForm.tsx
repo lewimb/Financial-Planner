@@ -87,7 +87,11 @@ export default function TransactionForm() {
               <FieldGroup className="gap-3">
                 <Field>
                   <FieldLabel htmlFor="amount">Amount</FieldLabel>
-                  <Input id="amount" type="number" />
+                  <Input
+                    placeholder="Income Amount"
+                    id="amount"
+                    type="number"
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="description">Description</FieldLabel>
