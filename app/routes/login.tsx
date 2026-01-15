@@ -1,46 +1,42 @@
-import { FaDollarSign } from "react-icons/fa";
+import { Field, FieldGroup, FieldLabel, FieldSet } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 
 export default function Login() {
   return (
-    <section>
-      <div className="flex flex-col justify-center items-center gap-8 py-10">
-        <div className="flex flex-col gap-4 justify-center items-center">
-          <div className="bg-blue-500 rounded-md w-fit p-4">
-            <FaDollarSign className="size-6 text-white" />
-          </div>
-          <span className="font-bold text-3xl">Welcome Back</span>
-          <span className=" text-neutral-500">
-            Sign in to continue managing your finances
-          </span>
-        </div>
-        <div className="space-y-6 p-6 shadow-2xl w-full max-w-xl rounded-lg">
-          <div className="space-y-2">
-            <p className="font-semibold">Login to your account</p>
-            <p className="text-neutral-500">
-              Enter your email and password below
-            </p>
-          </div>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label className=" font-semibold" htmlFor="email">
-                Email
-              </Label>
-              <Input type="email" id="email" />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold" htmlFor="password">
-                Password
-              </Label>
-              <Input type="password" id="password" />
-            </div>
-            <Button variant="default" className="w-full">
-              Sign in
-            </Button>
-          </div>
-        </div>
+    <section className="flex">
+      <img
+        src="/financial-wallpaper.jpg"
+        className="max-h-screen"
+        loading="lazy"
+        alt=""
+      />
+      <div className="flex flex-col gap-6 mx-auto justify-center">
+        <h3 className="text-2xl">Welcome Back!</h3>
+        <p className="text-xs text-neutral-600">
+          Sign in to access your dashboard and continue refining your long-term
+          wealth strategy.
+        </p>
+        <form action="">
+          <FieldSet>
+            <FieldGroup className="gap-4">
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input type="email" id="email" placeholder="Email" required />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <Input
+                  type="password"
+                  id="password"
+                  placeholder="Password"
+                  required
+                />
+              </Field>
+            </FieldGroup>
+            <Button>Login</Button>
+          </FieldSet>
+        </form>
       </div>
     </section>
   );
