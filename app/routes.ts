@@ -18,6 +18,7 @@ export default [
       route("/goals", "./routes/auth/goals.tsx"),
       route("/settings", "./routes/auth/settings.tsx"),
       route("/reports", "./routes/auth/reports.tsx"),
+      route("/ai-coach", "./routes/auth/ai-coach.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;
