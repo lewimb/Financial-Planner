@@ -1,26 +1,55 @@
 import { ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { formatRupiah } from "~/lib/utils/currencyFormatter";
+import type { Transaction } from "~/lib/types/transaction";
 
-export default function TransactionOverview() {
+interface Props {
+  items: Transaction[];
+}
+
+function calculateTotal(items: Transaction[]) {
+  const totalIncome = items.reduce(
+    (sum, item) =>
+      item.transactionTypes === "income" ? sum + item.amount : sum,
+    0,
+  );
+
+  const totalExpense = items.reduce(
+    (sum, item) =>
+      item.transactionTypes === "expense" ? sum + item.amount : sum,
+    0,
+  );
+
+  const netSavings = totalIncome - totalExpense;
+
+  return {
+    totalExpense,
+    totalIncome,
+    netSavings,
+  };
+}
+
+export default function TransactionOverview({ items }: Props) {
+  const { totalExpense, totalIncome, netSavings } = calculateTotal(items);
+
   const summary = [
     {
       label: "Total Income",
-      value: 12840,
+      value: totalIncome,
       icon: ArrowUpRight,
       color: "green",
       currency: "USD",
     },
     {
       label: "Total Expenses",
-      value: 8680,
+      value: totalExpense,
       icon: ArrowDownRight,
       color: "red",
       currency: "USD",
     },
     {
       label: "Net Savings",
-      value: 4160,
+      value: netSavings,
       icon: TrendingUp,
       color: "blue",
       currency: "USD",
@@ -60,13 +89,13 @@ export default function TransactionOverview() {
             <div
               className={cn(
                 "p-4 rounded-full",
-                `${colorMap[item.color as color].bg}`
+                `${colorMap[item.color as color].bg}`,
               )}
             >
               <item.icon
                 className={cn(
                   "size-6",
-                  `${colorMap[item.color as color].text}`
+                  `${colorMap[item.color as color].text}`,
                 )}
               />
             </div>
