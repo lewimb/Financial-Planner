@@ -1,6 +1,42 @@
-import { Field, FieldGroup, FieldLabel, FieldSet } from "~/components/ui/field";
+"use client";
+import { Form, redirect } from "react-router";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
+import type { Route } from "../+types/root";
+import { toast } from "sonner";
+
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const formData = await request.formData();
+  const user = Object.fromEntries(formData);
+
+  try {
+    const response = await fetch("http://localhost:8080/api/v1/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(user),
+    });
+
+    // Check if the response is okay before parsing JSON
+    if (!response.ok) {
+      throw "Wrong Credentials";
+    } else {
+      toast.success("Login Successful", { position: "top-right" });
+    }
+
+    const data = await response.json();
+    if (data?.token) {
+      return redirect("/auth/");
+    }
+    // return data;
+  } catch (error) {
+    toast.error("Wrong Credentials", { position: "top-right" });
+    console.error("Network or Parsing Error:", error);
+  }
+}
 
 export default function Login() {
   return (
@@ -17,26 +53,27 @@ export default function Login() {
           Sign in to access your dashboard and continue refining your long-term
           wealth strategy.
         </p>
-        <form action="">
-          <FieldSet>
-            <FieldGroup className="gap-4">
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input type="email" id="email" placeholder="Email" required />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
-                <Input
-                  type="password"
-                  id="password"
-                  placeholder="Password"
-                  required
-                />
-              </Field>
-            </FieldGroup>
-            <Button>Login</Button>
-          </FieldSet>
-        </form>
+        <Form className="space-y-4" method="post">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              placeholder="Input email"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Input password"
+            />
+          </div>
+          <Button className="w-full">Login</Button>
+        </Form>
       </div>
     </section>
   );
