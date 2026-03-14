@@ -1,11 +1,19 @@
 import { DataTable } from "../../shared/DataTable";
 import { columns } from "./TransactionColumns";
-import { transactions } from "~/lib/dummies/transactionDummies";
+import type { Transaction } from "~/lib/types/transaction";
 
-export default function TransactionTable() {
+interface Response<K> {
+  items: K[];
+  totalData: number;
+}
+
+export default function TransactionTable({
+  items,
+  totalData,
+}: Response<Transaction>) {
   return (
     <div>
-      <DataTable columns={columns} data={transactions} />
+      <DataTable columns={columns} data={items} pageSize={totalData} />
     </div>
   );
 }
