@@ -25,12 +25,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pageSize: number;
+  deleteMethod: (id: string) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pageSize,
+  deleteMethod,
 }: DataTableProps<TData, TValue>) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currIdx = Number(searchParams.get("pagination")) ?? 0;
@@ -48,6 +50,9 @@ export function DataTable<TData, TValue>({
     onPaginationChange: setPagination,
     state: {
       pagination,
+    },
+    meta: {
+      deleteMethod,
     },
     autoResetPageIndex: false,
   });

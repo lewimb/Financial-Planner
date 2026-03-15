@@ -92,9 +92,11 @@ export const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "amount",
     header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const amount = row.getValue<number>("amount");
       const isIncome = row.original.transactionTypes === "income";
+      const meta = table.options.meta;
+      const id = row.original.id;
 
       return (
         <div className="relative flex items-center justify-end overflow-hidden py-4">
@@ -117,7 +119,10 @@ export const columns: ColumnDef<Transaction>[] = [
 
             <Button
               variant="destructive"
-              onClick={() => console.log("Delete", row.original)}
+              onClick={() => {
+                console.log(id);
+                meta?.deleteMethod(String(id));
+              }}
             >
               Delete
             </Button>
