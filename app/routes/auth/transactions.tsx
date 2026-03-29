@@ -7,10 +7,14 @@ import tokenParser from "~/lib/utils/tokenParser";
 import type { Route } from "./+types/transactions";
 import { useGetTransactionById } from "~/hooks/transactions/use-transaction";
 import Loading from "~/lib/components/shared/Loading";
-import { addToken } from "~/features/users/userSlice";
-import { addUser } from "~/features/users/userSlice";
 import { useAppDispatch } from "~/hooks";
 import type { Transaction } from "~/lib/types/transaction";
+import { addToken, addUser } from "~/features/users/userSlice";
+import {
+  useDeleteTransaction,
+  useUpdateTransaction,
+} from "~/hooks/transactions/use-transaction";
+import type { Auth } from "~/lib/types/auth";
 
 export function loader({ request }: Route.LoaderArgs) {
   return tokenParser(request);
@@ -23,14 +27,18 @@ export default function Transaction({ loaderData }: Route.ComponentProps) {
     loaderData?.payload.userId,
   );
 
-  if (loaderData?.token) {
-    dispatch(addToken(loaderData?.token));
-    dispatch(addUser(loaderData?.payload));
-  }
+  dispatch(addToken(loaderData?.token ? loaderData?.token : ""));
+  dispatch(addUser(loaderData?.payload ? loaderData?.payload : ({} as Auth)));
 
-  if (isLoading || !data) return <Loading />;
+  const deleteTransaction = useDeleteTransaction(loaderData?.token);
 
-  console.log(data);
+  if (isLoading) return <Loading />;
+
+  const handleDelete = async (id: string) => {
+    if (loaderData?.payload.userId) {
+      await deleteTransaction.mutateAsync(id);
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -43,7 +51,11 @@ export default function Transaction({ loaderData }: Route.ComponentProps) {
         </Modal>
       </Header>
       <TransactionOverview items={data?.items} />
-      <TransactionTable totalData={data?.totalData} items={data?.items} />
+      <TransactionTable
+        deleteMethod={handleDelete}
+        totalData={data?.totalData}
+        items={data?.items}
+      />
     </section>
   );
 }

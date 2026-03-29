@@ -1,10 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { TransactionForm } from "~/lib/types/transaction";
+import type { Transaction } from "~/lib/types/transaction";
 import { toast } from "sonner";
-
-interface Props {
-  id: string | undefined;
-}
 
 export function useGetTransactionById(
   token: string | undefined,
@@ -40,7 +36,7 @@ export function useCreateTransaction({ token }: { token: string }) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (value: TransactionForm) =>
+    mutationFn: (value: Transaction) =>
       fetch("http://localhost:8080/api/v1/transaction", {
         method: "POST",
         body: JSON.stringify(value),
@@ -51,6 +47,14 @@ export function useCreateTransaction({ token }: { token: string }) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transaction created", {
+        position: "top-right",
+      });
+    },
+    onError: () => {
+      toast.error("Failed to create transactions", {
+        position: "top-right",
+      });
     },
   });
 }
@@ -78,15 +82,12 @@ export function useDeleteTransaction(token: string | undefined) {
   });
 }
 
-export function useUpdateTransaction(
-  token: string | undefined,
-  userId: number | undefined,
-) {
+export function useUpdateTransaction(token: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (value: TransactionForm) =>
-      fetch(`http://localhost:8080/api/v1/transaction/${userId}`, {
+    mutationFn: (value: Transaction) =>
+      fetch(`http://localhost:8080/api/v1/transaction/${value.id}`, {
         method: "PUT",
         body: JSON.stringify(value),
         headers: {

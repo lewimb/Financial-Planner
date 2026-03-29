@@ -5,6 +5,7 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import type { Route } from "../+types/root";
 import { toast } from "sonner";
+import { useLogin } from "~/hooks/auth/use-login";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -39,6 +40,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Login() {
+  const login = useLogin();
+
   return (
     <section className="flex">
       <img

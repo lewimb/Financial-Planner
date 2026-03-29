@@ -1,19 +1,21 @@
 import z from "zod";
 
 export interface Transaction {
-  id: number;
-  userId: number;
-  amount: number;
-  transactionTypes: string;
-  description: string;
-  account: string;
-  date: Date;
-  updatedAt: Date;
-  createdAt: Date;
+  id?: number;
+  userId?: number | undefined;
+  amount?: number;
+  transactionTypes?: string;
+  description?: string;
+  type?: string;
+  category?: string;
+  account?: string;
+  date?: Date;
+  updatedAt?: Date;
+  createdAt?: Date;
 }
 
 export interface TransactionForm {
-  userId: number | undefined;
+  id: number | undefined;
   amount: number;
   type: string;
   description: string;

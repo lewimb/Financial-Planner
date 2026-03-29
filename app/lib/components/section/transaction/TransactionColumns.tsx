@@ -2,8 +2,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatRupiah } from "../../../utils/currencyFormatter";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "~/lib/utils";
-import type { Transaction } from "~/lib/types/transaction";
+import type { Transaction, TransactionForm } from "~/lib/types/transaction";
 import { Button } from "~/components/ui/button";
+import TransactionFormTab from "./TransactionFormTab";
+import { Dialog } from "~/components/ui/dialog";
+import { Modal } from "../../shared/Modal";
 
 function capitalizeFirstWord(value: string) {
   const splittedString = value.split(" ");
@@ -110,17 +113,22 @@ export const columns: ColumnDef<Transaction>[] = [
           </div>
 
           <div className="absolute right-0 flex translate-x-full items-center gap-2 transition-transform duration-300 group-hover:translate-x-0 ">
-            <Button
+            {/* <Button
               variant="outline"
               onClick={() => console.log("Edit", row.original)}
             >
               Edit
-            </Button>
+            </Button> */}
+            <Modal label="Edit">
+              <TransactionFormTab
+                dialogTitle="Edit Transaction"
+                items={row.original}
+              />
+            </Modal>
 
             <Button
               variant="destructive"
               onClick={() => {
-                console.log(id);
                 meta?.deleteMethod(String(id));
               }}
             >

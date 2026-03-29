@@ -7,12 +7,16 @@ import { useForm } from "@tanstack/react-form";
 import { Button } from "~/components/ui/button";
 import { useCreateTransaction } from "~/hooks/transactions/use-transaction";
 import { useAppStore } from "~/hooks";
-import type { TransactionForm } from "~/lib/types/transaction";
+import type { Transaction } from "~/lib/types/transaction";
 
 import { formSchema } from "~/lib/types/transaction";
 import { Spinner } from "~/components/ui/spinner";
 
-export default function TransactionIncomeForm() {
+export default function TransactionIncomeForm({
+  items,
+}: {
+  items?: Transaction;
+}) {
   const store = useAppStore();
   const createTransaction = useCreateTransaction({
     token: store.getState().auth.token,
@@ -20,18 +24,18 @@ export default function TransactionIncomeForm() {
 
   const form = useForm({
     defaultValues: {
-      amount: "",
-      description: "",
-      date: new Date(),
-      category: "",
-      account: "",
+      amount: items?.amount ? items?.amount : "",
+      description: items?.description ? items?.description : "",
+      date: items?.date ? new Date(items?.date) : new Date(),
+      category: items?.category ? items?.category : "",
+      account: items?.account ? items?.account : "",
       type: "income",
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      const transactionData: TransactionForm = {
+      const transactionData = {
         amount: Number(value.amount),
         description: value.description,
         account: value.account,

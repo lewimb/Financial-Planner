@@ -6,32 +6,43 @@ import { categoryOptions } from "~/lib/utils/objectFormatter";
 import { useForm } from "@tanstack/react-form";
 import { Button } from "~/components/ui/button";
 import { useCreateTransaction } from "~/hooks/transactions/use-transaction";
+import { useUpdateTransaction } from "~/hooks/transactions/use-transaction";
 import { useAppStore } from "~/hooks";
-import type { TransactionForm } from "~/lib/types/transaction";
 import { Spinner } from "~/components/ui/spinner";
-
+import type { Transaction } from "~/lib/types/transaction";
 import { formSchema } from "~/lib/types/transaction";
 
-export default function TransactionExpenseForm() {
+export default function TransactionExpenseForm({
+  items,
+  isUpdate = false,
+  id,
+}: {
+  items?: Transaction;
+  isUpdate?: boolean;
+  id?: number;
+}) {
   const store = useAppStore();
+  const token = store.getState().auth.token;
   const createTransaction = useCreateTransaction({
-    token: store.getState().auth.token,
+    token,
   });
+
+  const updateTransaction = useUpdateTransaction(token);
 
   const form = useForm({
     defaultValues: {
-      amount: "",
-      description: "",
-      date: new Date(),
-      category: "",
-      account: "",
+      amount: items?.amount ? Number(items?.amount) : "",
+      description: items?.description ? items?.description : "",
+      date: items?.date ? new Date(items?.date) : new Date(),
+      category: items?.category ? items?.category : "",
+      account: items?.account ? items?.account : "",
       type: "expense",
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      const transactionData: TransactionForm = {
+      const transactionData: Transaction = {
         amount: Number(value.amount),
         description: value.description,
         account: value.account,
@@ -40,7 +51,12 @@ export default function TransactionExpenseForm() {
         type: value.type,
         category: value.category,
       };
-      createTransaction.mutateAsync(transactionData);
+      if (isUpdate) {
+        transactionData.id = id;
+        updateTransaction.mutateAsync(transactionData);
+      } else {
+        createTransaction.mutateAsync(transactionData);
+      }
     },
   });
 
