@@ -1,11 +1,25 @@
 import { DataTable } from "../../shared/DataTable";
 import { columns } from "./TransactionColumns";
-import { transactions } from "~/lib/dummies/transactionDummies";
+import type { Transaction } from "~/lib/types/transaction";
+import type { Response } from "~/lib/types/response";
 
-export default function TransactionTable() {
+interface Props {
+  deleteMethod: (id: string) => void;
+}
+
+export default function TransactionTable({
+  deleteMethod,
+  items,
+  totalData,
+}: Props & Response<Transaction>) {
   return (
     <div>
-      <DataTable columns={columns} data={transactions} />
+      <DataTable
+        deleteMethod={deleteMethod}
+        columns={columns}
+        data={items}
+        pageSize={totalData}
+      />
     </div>
   );
 }

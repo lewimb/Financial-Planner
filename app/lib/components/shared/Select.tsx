@@ -1,3 +1,4 @@
+import type React from "react";
 import {
   SelectTrigger,
   SelectValue,
@@ -16,19 +17,34 @@ interface Item {
 interface SelectProps {
   placeholder: string;
   id?: string;
+  name?: string;
   items: Item[];
   className?: string;
+  isInvalid?: boolean;
+  value?: string;
+  handleBlur?: React.FocusEventHandler<HTMLButtonElement>;
+  handleChange?: (value: string) => void;
 }
 
 export default function SharedSelect({
   placeholder,
   items,
   id,
+  name,
+  handleBlur,
+  value,
+  isInvalid = false,
+  handleChange,
   className,
 }: SelectProps) {
   return (
-    <Select>
-      <SelectTrigger id={id} className={cn("w-full", className)}>
+    <Select name={name} value={value} onValueChange={handleChange}>
+      <SelectTrigger
+        onBlur={handleBlur}
+        id={id}
+        aria-invalid={isInvalid}
+        className={cn("w-full", className)}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

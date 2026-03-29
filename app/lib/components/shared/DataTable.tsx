@@ -9,6 +9,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "~/components/ui/button";
+import { useState } from "react";
+import { useSearchParams } from "react-router";
 
 import {
   Table,
@@ -22,17 +24,37 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pageSize: number;
+  deleteMethod: (id: string) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  pageSize,
+  deleteMethod,
 }: DataTableProps<TData, TValue>) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currIdx = Number(searchParams.get("pagination")) ?? 0;
+
+  const [pagination, setPagination] = useState({
+    pageIndex: currIdx,
+    pageSize: 10,
+  });
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
+    state: {
+      pagination,
+    },
+    meta: {
+      deleteMethod,
+    },
+    autoResetPageIndex: false,
   });
 
   return (
@@ -51,7 +73,7 @@ export function DataTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 );
@@ -63,6 +85,7 @@ export function DataTable<TData, TValue>({
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
+                className="group"
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
               >
@@ -86,16 +109,24 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          onClick={() => {
+            setSearchParams({ pagination: String(currIdx - 1) });
+            table.previousPage();
+          }}
+          disabled={currIdx === 0 && !table.getCanPreviousPage()}
         >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          onClick={() => {
+            setSearchParams({ pagination: String(currIdx + 1) });
+            table.nextPage();
+          }}
+          disabled={
+            Math.floor(pageSize / 10) === currIdx && !table.getCanNextPage()
+          }
         >
           Next
         </Button>

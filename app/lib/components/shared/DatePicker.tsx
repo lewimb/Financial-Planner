@@ -31,7 +31,21 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime());
 }
 
-export function DatePicker() {
+interface DateProps {
+  handleBlur?: React.FocusEventHandler<HTMLInputElement>;
+  onChange: (date: Date) => void;
+  name?: string;
+  dateValue?: Date;
+  isInvalid?: boolean;
+}
+
+export function DatePicker({
+  name,
+  onChange,
+  dateValue,
+  isInvalid,
+  handleBlur,
+}: DateProps) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const [month, setMonth] = React.useState<Date | undefined>(date);
@@ -42,9 +56,12 @@ export function DatePicker() {
       <div className="relative flex gap-2">
         <Input
           id="date"
+          name={name}
           value={value}
           placeholder="June 01, 2025"
+          aria-invalid={isInvalid}
           className="bg-background pr-10"
+          onBlur={handleBlur}
           onChange={(e) => {
             const date = new Date(e.target.value);
             setValue(e.target.value);
@@ -85,6 +102,7 @@ export function DatePicker() {
               onMonthChange={setMonth}
               onSelect={(date) => {
                 setDate(date);
+                onChange(date ? date : new Date());
                 setValue(formatDate(date));
                 setOpen(false);
               }}
