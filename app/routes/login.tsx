@@ -5,14 +5,14 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import type { Route } from "../+types/root";
 import { toast } from "sonner";
-import { useLogin } from "~/hooks/auth/use-login";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const user = Object.fromEntries(formData);
 
   try {
-    const response = await fetch("http://localhost:8080/api/v1/auth/login", {
+    const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL;
+    const response = await fetch(`${baseUrl}/v1/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,7 +29,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     const data = await response.json();
-    if (data?.token) {
+    if (data) {
       return redirect("/auth/");
     }
     // return data;
@@ -40,8 +40,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Login() {
-  const login = useLogin();
-
   return (
     <section className="flex">
       <img
@@ -75,7 +73,7 @@ export default function Login() {
               placeholder="Input password"
             />
           </div>
-          <Button className="w-full">Login</Button>
+          <Button className="w-full cursor-pointer">Login</Button>
         </Form>
       </div>
     </section>

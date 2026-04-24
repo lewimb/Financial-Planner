@@ -1,43 +1,42 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Transaction } from "~/lib/types/transaction";
+import type { TransactionForm } from "~/lib/types/transaction";
 import { toast } from "sonner";
+
+// const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
 
 export function useGetTransactionById(
   token: string | undefined,
-  userId: number | undefined,
+  baseApi: string | undefined,
 ) {
   return useQuery({
-    queryKey: ["transactions", userId],
+    queryKey: ["transactions"],
 
     queryFn: async () => {
-      if (!token || !userId) return null;
+      if (!token) return null;
 
-      const response = await fetch(
-        `http://localhost:8080/api/v1/transaction/filter/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${baseApi}/auth/v1/transactions/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
 
-      return response.json();
+      return await response.json();
     },
-    enabled: !!token && !!userId,
+    enabled: !!token,
     staleTime: Infinity,
   });
 }
 
-export function useCreateTransaction({ token }: { token: string }) {
+export function useCreateTransaction(token: string, baseApi: String) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (value: Transaction) =>
-      fetch("http://localhost:8080/api/v1/transaction", {
+    mutationFn: (value: TransactionForm) =>
+      fetch(`${baseApi}/auth/v1/transactions`, {
         method: "POST",
         body: JSON.stringify(value),
         headers: {
@@ -59,12 +58,15 @@ export function useCreateTransaction({ token }: { token: string }) {
   });
 }
 
-export function useDeleteTransaction(token: string | undefined) {
+export function useDeleteTransaction(
+  token: string | undefined,
+  baseApi: string,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) =>
-      fetch(`http://localhost:8080/api/v1/transaction/${id}`, {
+      fetch(`${baseApi}/auth/v1/transactions/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -82,27 +84,27 @@ export function useDeleteTransaction(token: string | undefined) {
   });
 }
 
-export function useUpdateTransaction(token: string) {
-  const queryClient = useQueryClient();
+// export function useUpdateTransaction(token: string) {
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (value: Transaction) =>
-      fetch(`http://localhost:8080/api/v1/transaction/${value.id}`, {
-        method: "PUT",
-        body: JSON.stringify(value),
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-type": "application/json",
-        },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transaction updated successfully", {
-        position: "top-right",
-      });
-    },
-    onError: () => {
-      toast.error("Failed to update transaction", { position: "top-right" });
-    },
-  });
-}
+//   return useMutation({
+//     mutationFn: (value: Transaction) =>
+//       fetch(`${baseApi}/api/v1/transaction/${value.id}`, {
+//         method: "PUT",
+//         body: JSON.stringify(value),
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           "Content-type": "application/json",
+//         },
+//       }),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+//       toast.success("Transaction updated successfully", {
+//         position: "top-right",
+//       });
+//     },
+//     onError: () => {
+//       toast.error("Failed to update transaction", { position: "top-right" });
+//     },
+//   });
+// }

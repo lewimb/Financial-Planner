@@ -7,19 +7,23 @@ interface Props {
   items: Transaction[];
 }
 
-function calculateTotal(items: Transaction[]) {
+function calculateTotal(items?: Transaction[]) {
+  if (!items || items.length === 0) {
+    return {
+      totalExpense: 0,
+      totalIncome: 0,
+      netSavings: 0,
+    };
+  }
+
   const totalIncome = items.reduce(
-    (sum, item) =>
-      item.transactionTypes === "income" ? sum + item.amount : sum,
+    (sum, item) => (item.type === "INCOME" ? sum + (item.amount ?? 0) : sum),
     0,
   );
-
   const totalExpense = items.reduce(
-    (sum, item) =>
-      item.transactionTypes === "expense" ? sum + item.amount : sum,
+    (sum, item) => (item.type === "EXPENSE" ? sum + (item.amount ?? 0) : sum),
     0,
   );
-
   const netSavings = totalIncome - totalExpense;
 
   return {
@@ -28,7 +32,6 @@ function calculateTotal(items: Transaction[]) {
     netSavings,
   };
 }
-
 export default function TransactionOverview({ items }: Props) {
   const { totalExpense, totalIncome, netSavings } = calculateTotal(items);
 

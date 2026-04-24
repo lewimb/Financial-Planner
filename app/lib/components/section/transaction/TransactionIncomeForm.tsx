@@ -5,68 +5,83 @@ import { DatePicker } from "../../shared/DatePicker";
 import { categoryOptions } from "~/lib/utils/objectFormatter";
 import { useForm } from "@tanstack/react-form";
 import { Button } from "~/components/ui/button";
-import { useCreateTransaction } from "~/hooks/transactions/use-transaction";
-import { useAppStore } from "~/hooks";
-import type { Transaction } from "~/lib/types/transaction";
-
-import { formSchema } from "~/lib/types/transaction";
 import { Spinner } from "~/components/ui/spinner";
+import { useFetcher } from "react-router";
+import { useAppStore } from "~/hooks";
+import { toast } from "sonner";
+import type { Transaction } from "~/lib/types/transaction";
+import { formSchema } from "~/lib/types/transaction";
+import * as React from "react";
 
 export default function TransactionIncomeForm({
   items,
+  isUpdate = false,
+  id,
+  token,
+  onSuccess,
 }: {
   items?: Transaction;
+  isUpdate?: boolean;
+  id?: number;
+  token: string;
+  onSuccess?: () => void;
 }) {
   const store = useAppStore();
-  const createTransaction = useCreateTransaction({
-    token: store.getState().auth.token,
-  });
+  const fetcher = useFetcher();
+  const isPending = fetcher.state === "submitting";
+  const formId = `income-form-${id ?? "new"}`;
+
+  React.useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      // ✅ only after an actual submit
+      toast.success(isUpdate ? "Transaction updated" : "Transaction created", {
+        position: "top-right",
+      });
+      onSuccess?.();
+    }
+    if (fetcher.state === "idle" && fetcher.data?.error) {
+      toast.error(fetcher.data.error, { position: "top-right" });
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const form = useForm({
     defaultValues: {
-      amount: items?.amount ? items?.amount : "",
-      description: items?.description ? items?.description : "",
-      date: items?.date ? new Date(items?.date) : new Date(),
-      category: items?.category ? items?.category : "",
-      account: items?.account ? items?.account : "",
-      type: "income",
+      amount: items?.amount ? String(items.amount) : "",
+      description: items?.description ?? "",
+      date: items?.date ? new Date(items.date) : new Date(),
+      category: items?.category ?? "",
+      type: "INCOME",
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      const transactionData = {
-        amount: Number(value.amount),
+      const payload: Record<string, string | number> = {
+        amount: Math.floor(Number(value.amount)),
         description: value.description,
-        account: value.account,
-        userId: store.getState().auth.authUser?.userId,
-        date: new Date(value.date),
-        type: value.type,
         category: value.category,
+        date: new Date(value.date).toISOString(),
+        type: value.type,
+        userId: store.getState().auth.authUser?.userId ?? 0,
+        token,
       };
-      createTransaction.mutateAsync(transactionData);
+
+      if (isUpdate && id) {
+        payload.id = id;
+      }
+
+      fetcher.submit(payload, {
+        method: isUpdate ? "PATCH" : "POST",
+        encType: "application/json",
+        action: "/auth/transactions",
+      });
     },
   });
-
-  const account = [
-    {
-      value: "main checking",
-      label: "Main Checking",
-    },
-    {
-      value: "credit card",
-      label: "Credit Card",
-    },
-    {
-      value: "saving accounts",
-      label: "Saving Accounts",
-    },
-  ];
 
   return (
     <>
       <form
-        id="income-form"
+        id={formId}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
@@ -74,6 +89,7 @@ export default function TransactionIncomeForm({
       >
         <FieldSet>
           <FieldGroup className="gap-3">
+            {/* Amount */}
             <form.Field
               name="amount"
               children={(field) => {
@@ -81,7 +97,7 @@ export default function TransactionIncomeForm({
                   field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field>
-                    <FieldLabel htmlFor="amount">Amount</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -91,12 +107,14 @@ export default function TransactionIncomeForm({
                       aria-invalid={isInvalid}
                       placeholder="Income Amount"
                       type="number"
+                      min={1}
                     />
                   </Field>
                 );
               }}
             />
 
+            {/* Description */}
             <form.Field
               name="description"
               children={(field) => {
@@ -119,6 +137,7 @@ export default function TransactionIncomeForm({
               }}
             />
 
+            {/* Category */}
             <form.Field
               name="category"
               children={(field) => {
@@ -141,42 +160,23 @@ export default function TransactionIncomeForm({
               }}
             />
 
+            {/* Date */}
             <form.Field
               name="date"
               children={(field) => {
                 const isInvalid =
                   field.state.meta.isTouched && !field.state.meta.isValid;
-
                 return (
                   <Field>
-                    <FieldLabel htmlFor="date">Date</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Date</FieldLabel>
                     <DatePicker
                       onChange={(date) => field.handleChange(date)}
                       handleBlur={field.handleBlur}
                       name={field.name}
                       isInvalid={isInvalid}
-                    />
-                  </Field>
-                );
-              }}
-            />
-
-            <form.Field
-              name="account"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field>
-                    <FieldLabel htmlFor={field.name}>Account</FieldLabel>
-                    <SharedSelect
-                      id={field.name}
-                      handleBlur={field.handleBlur}
-                      handleChange={field.handleChange}
-                      value={field.state.value}
-                      isInvalid={isInvalid}
-                      items={account}
-                      placeholder="Select account"
+                      defaultValue={
+                        items?.date ? new Date(items.date) : new Date()
+                      }
                     />
                   </Field>
                 );
@@ -185,12 +185,13 @@ export default function TransactionIncomeForm({
           </FieldGroup>
         </FieldSet>
       </form>
+
       <Field orientation="horizontal" className="w-full pt-4">
         <Button type="button" variant="outline" onClick={() => form.reset()}>
           Reset
         </Button>
-        <Button type="submit" form="income-form">
-          {createTransaction.isPending ? <Spinner /> : "Submit"}
+        <Button type="submit" form={formId} disabled={isPending}>
+          {isPending ? <Spinner /> : isUpdate ? "Update" : "Submit"}
         </Button>
       </Field>
     </>

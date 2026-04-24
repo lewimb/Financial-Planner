@@ -1,8 +1,6 @@
 "use client";
-
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Input } from "~/components/ui/input";
@@ -13,10 +11,7 @@ import {
 } from "~/components/ui/popover";
 
 function formatDate(date: Date | undefined) {
-  if (!date) {
-    return "";
-  }
-
+  if (!date) return "";
   return date.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
@@ -25,9 +20,7 @@ function formatDate(date: Date | undefined) {
 }
 
 function isValidDate(date: Date | undefined) {
-  if (!date) {
-    return false;
-  }
+  if (!date) return false;
   return !isNaN(date.getTime());
 }
 
@@ -36,6 +29,7 @@ interface DateProps {
   onChange: (date: Date) => void;
   name?: string;
   dateValue?: Date;
+  defaultValue?: Date; // ✅ added
   isInvalid?: boolean;
 }
 
@@ -43,13 +37,18 @@ export function DatePicker({
   name,
   onChange,
   dateValue,
+  defaultValue, // ✅ added
   isInvalid,
   handleBlur,
 }: DateProps) {
   const [open, setOpen] = React.useState(false);
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const [month, setMonth] = React.useState<Date | undefined>(date);
-  const [value, setValue] = React.useState(formatDate(date));
+  const [date, setDate] = React.useState<Date | undefined>(
+    defaultValue ?? undefined,
+  ); // ✅ init from defaultValue
+  const [month, setMonth] = React.useState<Date | undefined>(
+    defaultValue ?? undefined,
+  ); // ✅ init from defaultValue
+  const [value, setValue] = React.useState(formatDate(defaultValue)); // ✅ init from defaultValue
 
   return (
     <div className="flex flex-col gap-3">
