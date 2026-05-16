@@ -10,6 +10,8 @@ import {
   useDeleteTransaction,
 } from "~/hooks/transactions/use-transaction";
 import Loading from "~/lib/components/shared/Loading";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useNavigate, useSearchParams } from "react-router";
 
 export function loader({ request }: Route.LoaderArgs) {
   return tokenParser(request);
@@ -79,8 +81,16 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Transaction({ loaderData }: Route.ComponentProps) {
   const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
-  const { data, isLoading } = useGetTransactionById(loaderData?.token, baseApi);
   const deleteTransaction = useDeleteTransaction(loaderData?.token, baseApi);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const activeTab = searchParams.get("tab") ?? "all";
+  const { data, isLoading } = useGetTransactionById(
+    loaderData?.token,
+    baseApi,
+    activeTab,
+  );
 
   if (isLoading || !data) return <Loading />;
 
@@ -106,6 +116,20 @@ export default function Transaction({ loaderData }: Route.ComponentProps) {
         </Modal>
       </Header>
       <TransactionOverview items={data?.data} />
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => navigate(`?tab=${value}`)}
+        className="w-125"
+      >
+        <TabsList className="space-x-2">
+          <TabsTrigger className="cursor-pointer" value="all">
+            All
+          </TabsTrigger>
+          <TabsTrigger className="cursor-pointer" value="monthly">
+            Monthly
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       <TransactionTable
         token={loaderData?.token} // ✅ pass token to table for delete actions
         deleteMethod={handleDelete}

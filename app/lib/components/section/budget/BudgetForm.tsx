@@ -1,24 +1,31 @@
 import {
   DialogTitle,
-  DialogClose,
   DialogHeader,
   DialogFooter,
+  Dialog,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import SharedSelect from "../../shared/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { categoryOptions } from "~/lib/utils/objectFormatter";
 import { useForm } from "@tanstack/react-form";
-import { useAppStore } from "~/hooks";
 import { formSchema } from "~/lib/types/budgets";
 import type { CreateBudgetRequest, Period } from "~/lib/types/budgets";
-import { useCreateBudget } from "~/hooks/budgets/use-budget";
+import { useFetcher } from "react-router";
+import { Spinner } from "~/components/ui/spinner";
+import { toast } from "sonner";
+import * as React from "react";
 
 const periods = [
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
+  { value: "MONTHLY", label: "Monthly" },
+  { value: "YEARLY", label: "Yearly" },
 ];
 
 const threshold = [
@@ -47,60 +54,81 @@ interface Props {
   items?: CreateBudgetRequest;
   isUpdate?: boolean;
   id?: number;
+  onSuccess?: () => void;
+  period?: Period;
 }
 
-export default function BudgetForm({ items, isUpdate = false, id }: Props) {
-  const store = useAppStore();
-  const userId = store.getState().auth.authUser?.userId;
-  const token = store.getState().auth.token;
-  const createBudget = useCreateBudget({ token });
-  // const updateBudget = useUpdateBudget(store.getState().auth.token);
+export default function BudgetForm({
+  items,
+  isUpdate = false,
+  id,
+  onSuccess,
+  period = "MONTHLY",
+}: Props) {
+  const fetcher = useFetcher();
+  const isPending = fetcher.state === "submitting";
+  const formId = `budget-form-${id ?? "new"}`;
+
+  React.useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      toast.success(isUpdate ? "Budget updated" : "Budget created", {
+        position: "top-right",
+      });
+      onSuccess?.();
+    }
+    if (fetcher.state === "idle" && fetcher.data?.error) {
+      toast.error(fetcher.data.error, { position: "top-right" });
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const form = useForm({
     defaultValues: {
-      limitAmount: items?.limitAmount ? Number(items?.limitAmount) : "",
+      limitAmount: items?.limitAmount ? Number(items.limitAmount) : "",
       period: items?.period || ("" as Period),
-      category: items?.category ? items?.category : "",
-      month: items?.month ? items?.month : "",
+      category: items?.category ?? "",
+      month: items?.month ?? "",
       year: items?.year || new Date().getFullYear().toString(),
       alertThreshold: items?.alertThreshold
-        ? String(items?.alertThreshold)
+        ? String(items.alertThreshold)
         : "80",
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      const budgetData = {
+      const payload: Record<string, string | number | null> = {
         limitAmount: Number(value.limitAmount),
-        period: value.period as Period,
+        period: value.period,
         category: value.category,
-        month: Number(value.month),
+        month: value.period === "MONTHLY" ? Number(value.month) : null,
         year: Number(value.year),
-        alertThreshold: value.alertThreshold,
-        userId,
+        alertThreshold: Number(value.alertThreshold),
       };
 
       if (isUpdate && id) {
-        // updateBudget.mutateAsync({ ...budgetData, id });
-        console.log("Updating budget:", { ...budgetData, id });
-      } else {
-        createBudget.mutateAsync(budgetData);
-        console.log("Creating budget:", budgetData);
+        payload.id = id;
       }
+
+      fetcher.submit(payload, {
+        method: isUpdate ? "PATCH" : "POST",
+        encType: "application/json",
+        action: "/auth/budgets",
+      });
     },
   });
 
   return (
     <div className="space-y-6">
-      <DialogHeader>
-        <DialogTitle>
-          {isUpdate ? "Update Budget" : "Create Budget"}
-        </DialogTitle>
-      </DialogHeader>
+      <Dialog>
+        <DialogHeader>
+          <DialogTitle>
+            {isUpdate ? "Update Budget" : "Create Budget"}
+          </DialogTitle>
+        </DialogHeader>
+      </Dialog>
 
       <form
-        id="budget-form"
+        id={formId}
         className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -111,16 +139,27 @@ export default function BudgetForm({ items, isUpdate = false, id }: Props) {
         <form.Field
           name="category"
           children={(field) => (
-            <div className="grid gap-2">
+            <div className="grid gap-2 w-full">
               <Label htmlFor={field.name}>Category</Label>
-              <SharedSelect
-                id={field.name}
+              <Select
                 value={field.state.value}
-                handleChange={field.handleChange}
-                handleBlur={field.handleBlur}
-                items={categoryOptions}
-                placeholder="Select category"
-              />
+                onValueChange={field.handleChange}
+              >
+                <SelectTrigger
+                  id={field.name}
+                  className="w-full"
+                  onBlur={field.handleBlur}
+                >
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         />
@@ -131,35 +170,59 @@ export default function BudgetForm({ items, isUpdate = false, id }: Props) {
           children={(field) => (
             <div className="grid gap-2">
               <Label htmlFor={field.name}>Period</Label>
-              <SharedSelect
-                id={field.name}
+              <Select
                 value={field.state.value}
-                handleChange={field.handleChange}
-                handleBlur={field.handleBlur}
-                items={periods}
-                placeholder="Select period"
-              />
+                onValueChange={field.handleChange}
+              >
+                <SelectTrigger
+                  className="w-full"
+                  id={field.name}
+                  onBlur={field.handleBlur}
+                >
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {periods.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         />
 
-        {/* Month (for monthly) */}
-        <form.Field
-          name="month"
-          children={(field) => (
-            <div className="grid gap-2">
-              <Label htmlFor={field.name}>Month</Label>
-              <SharedSelect
-                id={field.name}
-                value={String(field.state.value)}
-                handleChange={field.handleChange}
-                handleBlur={field.handleBlur}
-                items={months}
-                placeholder="Select month"
-              />
-            </div>
-          )}
-        />
+        {/* Month — only visible when period is MONTHLY */}
+        {period === "MONTHLY" && (
+          <form.Field
+            name="month"
+            children={(field) => (
+              <div className="grid gap-2">
+                <Label htmlFor={field.name}>Month</Label>
+                <Select
+                  value={String(field.state.value)}
+                  onValueChange={field.handleChange}
+                >
+                  <SelectTrigger
+                    className="w-full"
+                    id={field.name}
+                    onBlur={field.handleBlur}
+                  >
+                    <SelectValue placeholder="Select month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
+        )}
 
         {/* Year */}
         <form.Field
@@ -197,33 +260,48 @@ export default function BudgetForm({ items, isUpdate = false, id }: Props) {
           )}
         />
 
-        {/* Alert threshold */}
+        {/* Alert Threshold */}
         <form.Field
           name="alertThreshold"
           children={(field) => (
             <div className="grid gap-2">
               <Label htmlFor={field.name}>Alert Threshold</Label>
-              <SharedSelect
-                id={field.name}
+              <Select
                 value={field.state.value}
-                handleChange={field.handleChange}
-                handleBlur={field.handleBlur}
-                items={threshold}
-                placeholder="Select threshold"
-              />
+                onValueChange={field.handleChange}
+              >
+                <SelectTrigger
+                  className="w-full"
+                  id={field.name}
+                  onBlur={field.handleBlur}
+                >
+                  <SelectValue placeholder="Select threshold" />
+                </SelectTrigger>
+                <SelectContent>
+                  {threshold.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         />
       </form>
 
       <DialogFooter className="flex gap-2 sm:justify-start">
-        <DialogClose asChild>
-          <Button type="button" variant="secondary">
-            Close
-          </Button>
-        </DialogClose>
-        <Button type="submit" form="budget-form">
-          {isUpdate ? "Update Budget" : "Create Budget"}
+        <Button type="button" variant="secondary" onClick={() => form.reset()}>
+          Reset
+        </Button>
+        <Button type="submit" form={formId} disabled={isPending}>
+          {isPending ? (
+            <Spinner />
+          ) : isUpdate ? (
+            "Update Budget"
+          ) : (
+            "Create Budget"
+          )}
         </Button>
       </DialogFooter>
     </div>

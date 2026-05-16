@@ -34,7 +34,23 @@ export interface CreateBudgetRequest {
   month: number;
   year: number;
   limitAmount: number;
-  alertThreshold: string;
+  alertThreshold: number;
+}
+
+export interface UpdateBudgetRequest {
+  category: string;
+  limitAmount: number;
+  alertThreshold: number;
+}
+
+export interface UpdateBudgetResponse {
+  id: number;
+  category: string;
+  period: string;
+  month: number;
+  year: number;
+  limitAmount: number;
+  alertThreshold: number;
 }
 
 export const formSchema = z

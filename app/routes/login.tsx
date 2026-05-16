@@ -5,6 +5,8 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import type { Route } from "../+types/root";
 import { toast } from "sonner";
+import { useNavigation } from "react-router";
+import { cn } from "~/lib/utils";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -40,6 +42,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Login() {
+  const navigation = useNavigation();
+  const isLoading = navigation.state === "submitting";
+
   return (
     <section className="flex">
       <img
@@ -73,7 +78,13 @@ export default function Login() {
               placeholder="Input password"
             />
           </div>
-          <Button className="w-full cursor-pointer">Login</Button>
+          <Button
+            className={cn("w-full", !isLoading && "cursor-pointer")}
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? "Submitting..." : "Submit"}
+          </Button>
         </Form>
       </div>
     </section>

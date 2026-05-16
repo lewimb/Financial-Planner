@@ -7,18 +7,30 @@ import { toast } from "sonner";
 export function useGetTransactionById(
   token: string | undefined,
   baseApi: string | undefined,
+  tab: string | undefined,
 ) {
+  const now = new Date();
+  const month = tab === "all" ? undefined : now.getMonth() + 1;
+  const year = tab === "all" ? undefined : now.getFullYear();
+
   return useQuery({
-    queryKey: ["transactions"],
+    queryKey: ["transactions", tab],
 
     queryFn: async () => {
       if (!token) return null;
 
-      const response = await fetch(`${baseApi}/auth/v1/transactions/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const params = new URLSearchParams();
+      if (month) params.set("month", String(month));
+      params.set("year", String(year));
+
+      const response = await fetch(
+        `${baseApi}/auth/v1/transactions/users?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Network response was not ok");
