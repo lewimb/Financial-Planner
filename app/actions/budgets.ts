@@ -23,21 +23,28 @@ export async function GetUsageBudgets(token: string, baseApi: string) {
     },
   ).then((value) => value.json());
 
-  return response;
+  // API returns a direct array, not a wrapped object
+  return Array.isArray(response) ? response : response.data ?? [];
 }
 
 export async function GetMonthlyExpense(token: string, baseApi: string) {
-  const response = await fetch(`${baseApi}/auth/v1/transactions/count`, {
+  const response = await fetch(`${baseApi}/auth/v1/transactions/monthly`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  }).then((value) => {
-    return value.json();
-  });
+  }).then((value) => value.json());
 
-  const { total } = response;
+  return response.total ?? 0;
+}
 
-  return total;
+export async function GetMonthlyIncome(token: string, baseApi: string) {
+  const response = await fetch(`${baseApi}/auth/v1/transactions/monthly-income`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((value) => value.json());
+
+  return response.total ?? 0;
 }
 
 export async function GetBudgetById(
@@ -58,7 +65,7 @@ export async function GetBudgetById(
 
     return await response.json();
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return null;
   }
 }
@@ -71,19 +78,23 @@ export async function UpdateBudget(
 ) {
   try {
     const response = await fetch(`${baseApi}/auth/v1/budgets/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-type": "application/json",
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestData),
+      body: JSON.stringify({
+        limit_amount: requestData.limitAmount,
+        alert_threshold: requestData.alertThreshold,
+        category: requestData.category,
+      }),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
     throw err;
   }
 }
