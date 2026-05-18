@@ -1,4 +1,3 @@
-import { ca } from "date-fns/locale";
 import z from "zod";
 
 export const Category = {
@@ -35,6 +34,19 @@ export interface CreateBudgetRequest {
   year: number;
   limitAmount: number;
   alertThreshold: number;
+}
+
+export interface BudgetUsage {
+  budget_id: number;
+  category: string;
+  period: "MONTHLY" | "YEARLY";
+  limit: number;
+  alert_threshold: number;
+  used: number;
+  remaining: number;
+  percentage: number;
+  status: "SAFE" | "WARNING" | "EXCEEDED";
+  change_percent: number;
 }
 
 export interface UpdateBudgetRequest {
