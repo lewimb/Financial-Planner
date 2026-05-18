@@ -12,7 +12,7 @@ import {
 import { formatRupiah } from "../../../utils/currencyFormatter";
 import { cn } from "~/lib/utils";
 import ProgressBar from "../../shared/ProgressBar";
-import type { BudgetUsage } from "~/routes/auth/budgets";
+import type { BudgetUsage } from "~/lib/types/budgets";
 import { Popover, PopoverTrigger } from "~/components/ui/popover";
 import { BudgetPopoverContent } from "./BudgetPopover";
 
@@ -108,7 +108,7 @@ export default function BudgetCategories({ items }: Props) {
                     <div>
                       <p className="font-semibold text-base">{item.category}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.used} transactions
+                        {formatRupiah(item.used)} spent
                       </p>
                     </div>
                   </div>

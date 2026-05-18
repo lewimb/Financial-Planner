@@ -6,58 +6,36 @@ import BudgetCategories from "~/lib/components/section/budget/BudgetCategories";
 import BudgetBreakdown from "../../lib/components/section/budget/BudgetBreakdown";
 import tokenParser from "~/lib/utils/tokenParser";
 import type { Route } from "./+types/budgets";
+import type { BudgetUsage } from "~/lib/types/budgets";
 import {
   GetBudgets,
   GetMonthlyExpense,
   GetUsageBudgets,
 } from "~/actions/budgets";
-import { GetTransactionById } from "~/actions/transactions";
-
-export interface BudgetUsage {
-  budget_id: number;
-  category: string;
-  limit: number;
-  used: number;
-  remaining: number;
-  percentage: number;
-  status: string;
-  period: string;
-}
 
 export async function loader({ request }: Route.LoaderArgs) {
   try {
     const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
     const { token } = tokenParser(request);
-    const data = await GetBudgets(token, baseApi);
-    const usageData: BudgetUsage[] = await GetUsageBudgets(token, baseApi);
-    const monthlyExpense = await GetMonthlyExpense(token, baseApi);
-    const transactionData = await GetTransactionById(baseApi, token);
+    const [data, usageData, monthlyExpense] = await Promise.all([
+      GetBudgets(token, baseApi),
+      GetUsageBudgets(token, baseApi),
+      GetMonthlyExpense(token, baseApi),
+    ]);
+    const usage = (usageData ?? []) as BudgetUsage[];
 
-    let totalBudget = 0;
-    let totalTransaction = 0;
+    const totalBudget =
+      usage.length > 0
+        ? usage.reduce((acc, val) => acc + val.limit, 0)
+        : 0;
 
-    if (data.length > 0) {
-      totalBudget = usageData.reduce((acc: number, val) => acc + val.limit, 0);
-    }
-
-    if (transactionData) {
-      totalTransaction = transactionData.reduce(
-        (acc: number, val: { amount: number; type: string }) => {
-          if (val.type === "EXPENSE") {
-            return Number(acc) + Number(val.amount);
-          }
-          return acc;
-        },
-        0, // ← initial value
-      );
-    }
-
-    const remainingBudget = totalBudget - Number(totalTransaction);
-    const remainingPercentage = (remainingBudget / totalBudget) * 100;
+    const remainingBudget = totalBudget - Number(monthlyExpense);
+    const remainingPercentage =
+      totalBudget > 0 ? (remainingBudget / totalBudget) * 100 : 0;
 
     return {
       budgets: data,
-      usage: usageData,
+      usage,
       totalBudget,
       monthlyExpense,
       remainingBudget,
@@ -65,13 +43,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     };
   } catch (err) {
     console.error("Error loading budgets:", err);
+    return {
+      budgets: [],
+      usage: [],
+      totalBudget: 0,
+      monthlyExpense: 0,
+      remainingBudget: 0,
+      remainingPercentage: 0,
+    };
   }
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
 
-  if (request.method === "POST" || request.method === "PATCH") {
+  if (request.method === "POST" || request.method === "PUT") {
     const formData = await request.json();
     const { token } = tokenParser(request);
 
@@ -86,7 +72,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     try {
       const url =
-        request.method === "PATCH"
+        request.method === "PUT"
           ? `${baseApi}/auth/v1/budgets/${formData.id}`
           : `${baseApi}/auth/v1/budgets`;
 
@@ -123,6 +109,21 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
+  if (request.method === "DELETE") {
+    const fd = await request.formData();
+    const id = fd.get("id") as string;
+    const { token } = tokenParser(request);
+    try {
+      await fetch(`${baseApi}/auth/v1/budgets/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  }
+
   return new Response(
     JSON.stringify({ success: false, error: "Method not allowed" }),
     {
@@ -140,10 +141,13 @@ export default function Budget({ loaderData }: Route.ComponentProps) {
     monthlyExpense,
     remainingBudget,
     remainingPercentage,
-  } = loaderData || {
-    budgets: null,
-    usage: null,
+  } = loaderData ?? {
+    budgets: [],
+    usage: [],
     totalBudget: 0,
+    monthlyExpense: 0,
+    remainingBudget: 0,
+    remainingPercentage: 0,
   };
 
   return (
@@ -164,9 +168,9 @@ export default function Budget({ loaderData }: Route.ComponentProps) {
       />
       <div className="grid grid-cols-4 gap-6">
         <div className="col-span-3">
-          <BudgetCategories items={usage ? usage : []} />
+          <BudgetCategories items={usage ?? []} />
         </div>
-        <BudgetBreakdown total={totalBudget} items={usage ? usage : []} />
+        <BudgetBreakdown total={totalBudget} items={usage ?? []} />
       </div>
     </section>
   );

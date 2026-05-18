@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { BudgetUsage } from "~/routes/auth/budgets";
+import type { BudgetUsage } from "~/lib/types/budgets";
 import { ChartPieDonutActive } from "../../shared/PieChart";
 import { ChartPie } from "lucide-react";
 import { Button } from "~/components/ui/button";
