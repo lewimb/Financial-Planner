@@ -10,6 +10,7 @@ export default [
   layout("./routes/layout.tsx", [
     index("routes/home.tsx"),
     route("login", "./routes/login.tsx"),
+    route("register", "./routes/register.tsx"),
   ]),
 
   ...prefix("auth", [

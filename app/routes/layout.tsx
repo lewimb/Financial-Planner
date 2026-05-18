@@ -5,11 +5,10 @@ import type { Route } from "../+types/root";
 export function loader({ request }: Route.LoaderArgs) {
   const parser = tokenParser(request);
   const url = new URL(request.url);
-
   if (parser?.token === "" || parser?.isExpired) {
-    if (url.pathname !== "/login") throw redirect("/login");
+    if (url.pathname !== "/login" && url.pathname !== "/register")
+      throw redirect("/login");
   }
-
   if (parser?.token && !parser.isExpired) {
     throw redirect("/auth");
   }
