@@ -97,9 +97,6 @@ export async function action({ request }: Route.ActionArgs) {
 export default function UpdateBudgetsForm({
   loaderData,
 }: Route.ComponentProps) {
-  console.log("inside the page");
-  console.log(loaderData);
-
   return (
     <Form method="post" className="w-full max-w-lg space-y-6">
       <div className="space-y-1">
