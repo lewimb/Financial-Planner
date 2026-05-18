@@ -15,6 +15,7 @@ import { Button } from "~/components/ui/button";
 import { redirect, useFetcher, useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { Goal } from "~/lib/types/goals";
 
 interface LoaderData {
   data: Goal | null;
@@ -34,8 +35,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         },
       },
     ).then((val) => val.json());
-
-    console.log(res.data);
 
     return { data: res.data, err: null, status: true };
   } catch (err) {
@@ -94,10 +93,9 @@ export async function action({ request }: Route.ActionArgs) {
 
     const baseApi = process.env.VITE_REACT_BASE_API_URL;
     const accessToken = tokenParser(request);
-    console.log("accessToken from cookies : ", accessToken);
 
     const res = await fetch(`${baseApi}/auth/v1/goals/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken.token}`,
@@ -109,8 +107,6 @@ export async function action({ request }: Route.ActionArgs) {
         deadline,
       }),
     }).then((val) => val.json());
-
-    console.log(res);
 
     toast.success("Successfully update the data");
 

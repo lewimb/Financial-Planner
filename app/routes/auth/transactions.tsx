@@ -20,14 +20,14 @@ export function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
 
-  if (request.method === "POST" || request.method === "PATCH") {
+  if (request.method === "POST" || request.method === "PUT") {
     const formData = await request.json();
-    const token = formData.token; // ✅ get token from body since headers won't have it
+    const token = formData.token;
 
     try {
       const url =
-        request.method === "PATCH"
-          ? `${baseApi}/auth/v1/transactions/${formData.id}` // ✅ fixed url path
+        request.method === "PUT"
+          ? `${baseApi}/auth/v1/transactions/${formData.id}`
           : `${baseApi}/auth/v1/transactions`;
 
       const response = await fetch(url, {

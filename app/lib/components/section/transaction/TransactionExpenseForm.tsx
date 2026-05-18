@@ -71,7 +71,7 @@ export default function TransactionExpenseForm({
       }
 
       fetcher.submit(payload, {
-        method: isUpdate ? "PATCH" : "POST",
+        method: isUpdate ? "PUT" : "POST",
         encType: "application/json",
         action: "/auth/transactions",
       });

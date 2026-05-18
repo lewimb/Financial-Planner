@@ -24,7 +24,7 @@ export function useGetTransactionById(
       params.set("year", String(year));
 
       const response = await fetch(
-        `${baseApi}/auth/v1/transactions/users?${params.toString()}`,
+        `${baseApi}/auth/v1/transactions?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
