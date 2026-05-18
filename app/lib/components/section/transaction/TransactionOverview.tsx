@@ -7,74 +7,40 @@ interface Props {
   items: Transaction[];
 }
 
+const colorMap = {
+  green: { bg: "bg-green-300", text: "text-green-600" },
+  red: { bg: "bg-red-300", text: "text-red-600" },
+  blue: { bg: "bg-blue-300", text: "text-blue-600" },
+} as const;
+
+type color = keyof typeof colorMap;
+
 function calculateTotal(items?: Transaction[]) {
   if (!items || items.length === 0) {
-    return {
-      totalExpense: 0,
-      totalIncome: 0,
-      netSavings: 0,
-    };
+    return { totalExpense: 0, totalIncome: 0, netSavings: 0 };
   }
 
-  const totalIncome = items.reduce(
-    (sum, item) => (item.type === "INCOME" ? sum + (item.amount ?? 0) : sum),
-    0,
+  const { totalIncome, totalExpense } = items.reduce(
+    (acc, item) => {
+      const amount = item.amount ?? 0;
+      if (item.type === "INCOME") acc.totalIncome += amount;
+      else if (item.type === "EXPENSE") acc.totalExpense += amount;
+      return acc;
+    },
+    { totalIncome: 0, totalExpense: 0 },
   );
-  const totalExpense = items.reduce(
-    (sum, item) => (item.type === "EXPENSE" ? sum + (item.amount ?? 0) : sum),
-    0,
-  );
-  const netSavings = totalIncome - totalExpense;
 
-  return {
-    totalExpense,
-    totalIncome,
-    netSavings,
-  };
+  return { totalExpense, totalIncome, netSavings: totalIncome - totalExpense };
 }
+
 export default function TransactionOverview({ items }: Props) {
   const { totalExpense, totalIncome, netSavings } = calculateTotal(items);
 
   const summary = [
-    {
-      label: "Total Income",
-      value: totalIncome,
-      icon: ArrowUpRight,
-      color: "green",
-      currency: "USD",
-    },
-    {
-      label: "Total Expenses",
-      value: totalExpense,
-      icon: ArrowDownRight,
-      color: "red",
-      currency: "USD",
-    },
-    {
-      label: "Net Savings",
-      value: netSavings,
-      icon: TrendingUp,
-      color: "blue",
-      currency: "USD",
-    },
+    { label: "Total Income", value: totalIncome, icon: ArrowUpRight, color: "green" },
+    { label: "Total Expenses", value: totalExpense, icon: ArrowDownRight, color: "red" },
+    { label: "Net Savings", value: netSavings, icon: TrendingUp, color: "blue" },
   ];
-
-  const colorMap = {
-    green: {
-      bg: "bg-green-300",
-      text: "text-green-600",
-    },
-    red: {
-      bg: "bg-red-300",
-      text: "text-red-600",
-    },
-    blue: {
-      bg: "bg-blue-300",
-      text: "text-blue-600",
-    },
-  } as const;
-
-  type color = keyof typeof colorMap;
   return (
     <div className="flex max-lg:flex-wrap gap-6 justify-between">
       {summary.map((item) => (
