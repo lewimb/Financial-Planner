@@ -60,6 +60,7 @@ export function ChatInterface({ token }: Props) {
     try {
       const response = await fetch(`${baseApi}/auth/v1/chat`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

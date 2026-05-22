@@ -67,6 +67,7 @@ export function MLInsightsPanel({ analysis, anomaly, insights, token }: Props) {
     setForecastError(null);
     try {
       const res = await fetch(`${baseApi}/auth/v1/ml/forecast?periods=30`, {
+        credentials: "include",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 503) {

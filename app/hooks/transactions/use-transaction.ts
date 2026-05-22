@@ -26,6 +26,7 @@ export function useGetTransactionById(
       const response = await fetch(
         `${baseApi}/auth/v1/transactions?${params.toString()}`,
         {
+          credentials: "include",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -50,6 +51,7 @@ export function useCreateTransaction(token: string, baseApi: String) {
     mutationFn: (value: TransactionForm) =>
       fetch(`${baseApi}/auth/v1/transactions`, {
         method: "POST",
+        credentials: "include",
         body: JSON.stringify(value),
         headers: {
           Authorization: `Bearer ${token}`,
@@ -80,6 +82,7 @@ export function useDeleteTransaction(
     mutationFn: (id: string) =>
       fetch(`${baseApi}/auth/v1/transactions/${id}`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
         },

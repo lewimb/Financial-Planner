@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router";
 import { cn } from "../utils";
-import { removeCookie } from "typescript-cookie";
 import { useNavigate } from "react-router";
+import { clearToken } from "../utils/tokenStore";
 
 const items = [
   {
@@ -104,7 +104,7 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => {
-                  removeCookie("accessToken");
+                  clearToken();
                   navigate("/login");
                 }}
                 className={cn(

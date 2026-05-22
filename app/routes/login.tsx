@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button";
 import type { Route } from "../+types/root";
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
+import { setToken } from "~/lib/utils/tokenStore";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -26,6 +27,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     const data = await response.json();
+    if (data?.data?.token) {
+      setToken(data.data.token);
+    }
     if (data) {
       toast.success("Login successful", { position: "top-right" });
       return redirect("/auth/");
