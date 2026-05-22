@@ -4,7 +4,7 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { z } from "zod";
-import { register } from "~/actions/auth";
+import { toast } from "sonner";
 import type { Route } from "../+types/root";
 
 const registerSchema = z
@@ -26,10 +26,8 @@ interface ActionData {
   formError?: string;
 }
 
-export async function action({ request }: Route.ActionArgs): Promise<ActionData | Response> {
-  const baseApi = process.env.API_BASE_URL ?? "";
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
-
   const raw = {
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
@@ -48,25 +46,36 @@ export async function action({ request }: Route.ActionArgs): Promise<ActionData 
   }
 
   const { name, email, password } = parsed.data;
-  const result = await register({ name, email, password }, baseApi);
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL;
 
-  if (result.success) {
-    return redirect("/login?registered=1");
+  try {
+    const response = await fetch(`${baseUrl}/v1/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    if (response.ok) {
+      toast.success("Account created! You can now sign in.", {
+        position: "top-right",
+      });
+      return redirect("/login?registered=1");
+    }
+
+    const { error }: { error: string } = await response.json();
+
+    if (response.status === 409) {
+      return { fieldErrors: { email: error || "An account with this email already exists" } };
+    }
+
+    return { formError: error || "Invalid registration details" };
+  } catch {
+    return { formError: "Something went wrong. Please try again later." };
   }
-
-  if (result.status === 409) {
-    return { fieldErrors: { email: "An account with this email already exists" } };
-  }
-
-  if (result.status === 400) {
-    return { formError: result.error || "Invalid registration details" };
-  }
-
-  return { formError: "Something went wrong. Please try again later." };
 }
 
 export default function Register() {
-  const actionData = useActionData<typeof action>() as ActionData | undefined;
+  const actionData = useActionData<typeof clientAction>() as ActionData | undefined;
   const navigation = useNavigation();
   const isPending = navigation.state === "submitting";
 
@@ -162,9 +171,7 @@ export default function Register() {
               placeholder="Repeat your password"
               autoComplete="new-password"
               aria-invalid={!!actionData?.fieldErrors?.confirmPassword}
-              aria-describedby={
-                actionData?.fieldErrors?.confirmPassword ? "confirm-error" : undefined
-              }
+              aria-describedby={actionData?.fieldErrors?.confirmPassword ? "confirm-error" : undefined}
               className={cn(actionData?.fieldErrors?.confirmPassword && "border-red-500")}
             />
             {actionData?.fieldErrors?.confirmPassword && (
