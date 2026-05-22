@@ -1,3 +1,4 @@
+"use client";
 import {
   Sidebar,
   SidebarContent,
@@ -17,9 +18,13 @@ import {
   Target,
   LucideMessageSquare,
   ChartBar,
+  TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { useLocation } from "react-router";
 import { cn } from "../utils";
+import { removeCookie } from "typescript-cookie";
+import { useNavigate } from "react-router";
 
 const items = [
   {
@@ -53,6 +58,11 @@ const items = [
     icon: ChartBar,
   },
   {
+    title: "Forecast",
+    url: "/forecast",
+    icon: TrendingUp,
+  },
+  {
     title: "Settings",
     url: "/settings",
     icon: Settings,
@@ -61,6 +71,7 @@ const items = [
 
 export function AppSidebar() {
   const currentPath = useLocation().pathname.split("auth")[1] || "/";
+  const navigate = useNavigate();
 
   return (
     <Sidebar>
@@ -68,7 +79,7 @@ export function AppSidebar() {
         <div className="p-2 bg-black rounded-lg">
           <Wallet2 className="size-6 text-white" />
         </div>
-        <span className="text-xl font-semibold">FinancePlanner</span>
+        <span className="text-xl font-semibold">CashWise</span>
       </SidebarHeader>
       <SidebarContent className="p-4 border-y border-neutral-300">
         <SidebarGroup className="p-0">
@@ -79,7 +90,7 @@ export function AppSidebar() {
                   className={cn(
                     "text-neutral-600 duration-300 rounded-lg",
                     item.url === currentPath &&
-                      "bg-black text-white pointer-events-none"
+                      "bg-black text-white pointer-events-none",
                   )}
                   asChild
                 >
@@ -90,6 +101,20 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => {
+                  removeCookie("accessToken");
+                  navigate("/login");
+                }}
+                className={cn(
+                  "rounded-lg text-red-700 hover:bg-red-400 duration-300 cursor-pointer",
+                )}
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

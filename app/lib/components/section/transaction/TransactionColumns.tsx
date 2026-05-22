@@ -2,20 +2,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatRupiah } from "../../../utils/currencyFormatter";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "~/lib/utils";
-import type { Transaction, TransactionForm } from "~/lib/types/transaction";
+import type { Transaction } from "~/lib/types/transaction";
 import { Button } from "~/components/ui/button";
 import TransactionFormTab from "./TransactionFormTab";
-import { Dialog } from "~/components/ui/dialog";
 import { Modal } from "../../shared/Modal";
 
-function capitalizeFirstWord(value: string) {
-  const splittedString = value.split(" ");
-  return splittedString
-    .map((val) => val.charAt(0).toUpperCase() + val.slice(1))
-    .join(" ");
-}
-
-export const columns: ColumnDef<Transaction>[] = [
+export const getColumns = (token: string): ColumnDef<Transaction>[] => [
+  // ✅ function with token
   {
     accessorKey: "description",
     header: "Description",
@@ -24,14 +17,13 @@ export const columns: ColumnDef<Transaction>[] = [
         <div
           className={cn(
             "p-3 rounded-full bg-green-200 text-green-600",
-            row.getValue("transactionTypes") === "expense" &&
-              "bg-red-200 text-red-600",
+            row.getValue("type") === "EXPENSE" && "bg-red-200 text-red-600",
           )}
         >
           <ArrowUpRight
             className={cn(
               "size-4",
-              row.getValue("transactionTypes") === "expense" && "rotate-z-90",
+              row.getValue("type") === "EXPENSE" && "rotate-z-90",
             )}
           />
         </div>
@@ -63,25 +55,15 @@ export const columns: ColumnDef<Transaction>[] = [
     },
   },
   {
-    accessorKey: "account",
-    header: "Account",
-    cell: ({ row }) => (
-      <div>{capitalizeFirstWord(row.getValue("account"))}</div>
-    ),
-  },
-  {
-    accessorKey: "transactionTypes",
-    header: "transactionTypes",
+    accessorKey: "type",
+    header: "Type",
     cell: ({ row }) => {
-      const transactionTypes = row.getValue<"income" | "expense">(
-        "transactionTypes",
-      );
-
+      const transactionTypes = row.getValue<"INCOME" | "EXPENSE">("type");
       return (
         <span
           className={`rounded-full px-2 py-1 text-xs capitalize font-medium
             ${
-              transactionTypes === "income"
+              transactionTypes === "INCOME"
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
             }
@@ -97,7 +79,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row, table }) => {
       const amount = row.getValue<number>("amount");
-      const isIncome = row.original.transactionTypes === "income";
+      const isIncome = row.original.type === "INCOME"; // ✅ fixed uppercase
       const meta = table.options.meta;
       const id = row.original.id;
 
@@ -109,28 +91,27 @@ export const columns: ColumnDef<Transaction>[] = [
               isIncome ? "text-green-600" : "text-red-600",
             )}
           >
+            {!isIncome ? "- " : ""}
             {formatRupiah(amount)}
           </div>
-
-          <div className="absolute right-0 flex translate-x-full items-center gap-2 transition-transform duration-300 group-hover:translate-x-0 ">
-            {/* <Button
-              variant="outline"
-              onClick={() => console.log("Edit", row.original)}
-            >
-              Edit
-            </Button> */}
-            <Modal label="Edit">
-              <TransactionFormTab
-                dialogTitle="Edit Transaction"
-                items={row.original}
-              />
-            </Modal>
-
+          <div className="absolute right-0 flex translate-x-full items-center gap-2 transition-transform duration-300 group-hover:translate-x-0">
+            {/* <Modal label="Edit">
+              {(close) => (
+                <TransactionFormTab
+                  key={row.original.id}
+                  token={token}
+                  dialogTitle="Edit Transaction"
+                  items={row.original}
+                  isUpdate={true}
+                  id={row.original.id}
+                  onSuccess={close} // ✅ closes modal only on success
+                />
+              )}
+            </Modal> */}
             <Button
               variant="destructive"
-              onClick={() => {
-                meta?.deleteMethod(String(id));
-              }}
+              className="cursor-pointer"
+              onClick={() => meta?.deleteMethod(String(id))}
             >
               Delete
             </Button>

@@ -7,9 +7,11 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
+  route("onboarding", "./routes/onboarding.tsx"),
   layout("./routes/layout.tsx", [
     index("routes/home.tsx"),
     route("login", "./routes/login.tsx"),
+    route("register", "./routes/register.tsx"),
   ]),
 
   ...prefix("auth", [
@@ -20,7 +22,10 @@ export default [
       route("/goals", "./routes/auth/goals.tsx"),
       route("/settings", "./routes/auth/settings.tsx"),
       route("/reports", "./routes/auth/reports.tsx"),
+      route("/forecast", "./routes/auth/forecast.tsx"),
       route("/ai-coach", "./routes/auth/ai-coach.tsx"),
+      route("/budget/:id", "./routes/auth/budget-detail.tsx"),
+      route("/goals/:id", "./routes/auth/goal-update-form.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

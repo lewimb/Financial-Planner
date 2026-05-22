@@ -1,45 +1,57 @@
-import {
-  DollarSign,
-  ArrowUp,
-  ArrowDown,
-  Target,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowUp, ArrowDown, Target, TrendingUp } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { formatRupiah } from "~/lib/utils/currencyFormatter";
+import type { DashboardResponse } from "~/lib/types/dashboard";
 
-export default function DashboardOverview() {
-  const cardObj = [
-    {
-      title: "Total Balance",
-      percentageChange: 12.5,
-      icon: DollarSign,
-      amount: 200000,
-    },
+interface Props {
+  monthlyIncome: number;
+  monthlyExpense: number;
+  netSavings: number;
+  goalProgress: DashboardResponse["goal_summary"] | null;
+}
+
+export default function DashboardOverview({
+  monthlyIncome,
+  monthlyExpense,
+  netSavings,
+  goalProgress,
+}: Props) {
+  const cards = [
     {
       title: "Income (This Month)",
-      percentageChange: 12.5,
       icon: ArrowUp,
-      amount: 200000,
+      amount: monthlyIncome,
+      positive: true,
     },
     {
       title: "Expenses (This Month)",
-      percentageChange: -12.5,
       icon: ArrowDown,
-      amount: 200000,
+      amount: monthlyExpense,
+      positive: false,
+    },
+    {
+      title: "Net Savings",
+      icon: TrendingUp,
+      amount: netSavings,
+      positive: netSavings >= 0,
     },
   ];
+
+  const completionRate =
+    goalProgress && goalProgress.total > 0
+      ? Math.round((goalProgress.completed / goalProgress.total) * 100)
+      : 0;
 
   return (
     <div>
       <div className="grid grid-cols-4 gap-4">
-        {cardObj.map((card) => (
+        {cards.map((card) => (
           <div
             key={card.title}
             className="p-6 rounded-lg shadow-lg flex flex-col gap-6"
           >
             <div className="flex items-center justify-between text-sm font-medium text-muted-foreground pb-6">
-              <p className="">{card.title}</p>
+              <p>{card.title}</p>
               <card.icon className="size-4" />
             </div>
             <div className="space-y-3">
@@ -49,34 +61,31 @@ export default function DashboardOverview() {
               <div className="flex gap-2">
                 <div
                   className={cn(
-                    "text-green-600 flex gap-2 items-center",
-                    card.percentageChange < 0 && "text-red-600"
+                    "flex gap-2 items-center",
+                    card.positive ? "text-green-600" : "text-red-600",
                   )}
                 >
                   <TrendingUp
-                    className={cn(card.percentageChange < 0 && "rotate-x-180 ")}
+                    className={cn(!card.positive && "rotate-x-180")}
                     size={16}
                   />
-                  <span className="text-sm">
-                    {card.percentageChange.toFixed(2)}%
-                  </span>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  from last month
-                </span>
               </div>
             </div>
           </div>
         ))}
+
         <div className="p-6 rounded-lg shadow-lg flex flex-col gap-6">
           <div className="flex items-center justify-between text-sm font-medium text-muted-foreground pb-6">
-            <p className="">Saving Goals</p>
+            <p>Saving Goals</p>
             <Target className="h-4 w-4" />
           </div>
           <div className="space-y-2">
-            <p className="text-2xl font-semibold">68%</p>
+            <p className="text-2xl font-semibold">{completionRate}%</p>
             <span className="text-sm text-muted-foreground">
-              $6,800 of $10,000 saved
+              {goalProgress
+                ? `${goalProgress.completed} of ${goalProgress.total} completed`
+                : "No goals yet"}
             </span>
           </div>
         </div>

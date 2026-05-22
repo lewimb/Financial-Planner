@@ -7,23 +7,18 @@ export default function tokenParser(request: Request) {
   const token = cookies.accessToken;
 
   if (token) {
-    const rawJwt = atob(token);
+    const parts = token.split(".");
+    if (parts.length !== 3) throw new Error("Invalid Token Format");
 
-    // 3. Extract and parse the payload (the middle part)
-    const payloadPart = rawJwt.split(".")[1];
-    if (!payloadPart) throw new Error("Invalid Token Format");
-
-    // Standard atob for the payload
-    const payload: Auth = JSON.parse(atob(payloadPart));
+    // Decode payload (URL-safe base64 → Buffer)
+    const payload: Auth = JSON.parse(
+      Buffer.from(parts[1], "base64url").toString("utf-8"),
+    );
 
     const isExpired = payload.exp * 1000 < Date.now();
 
-    return {
-      token: rawJwt,
-      payload,
-      isExpired,
-    };
+    return { token, payload, isExpired };
   }
 
-  return null;
+  return { token: "", payload: null, isExpired: null };
 }

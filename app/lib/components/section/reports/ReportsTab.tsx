@@ -5,30 +5,35 @@ import { ReportsTransactions } from "./ReportTransactions";
 import { ReportsCategoriesPie } from "./ReportCategoriesSpending";
 import { ReportsSavingRate } from "./ReportsSavingRate";
 import ReportsTrendsMetrics from "./ReportsTrendsMetric";
+import { MLInsightsPanel } from "./MLInsightsPanel";
+import type {
+  MLAnalysisResponse,
+  MLAnomalyResponse,
+  MLInsightsResponse,
+} from "~/lib/types/ml";
 
-export function ReportsTab() {
+interface Props {
+  analysis: MLAnalysisResponse | null;
+  anomaly: MLAnomalyResponse | null;
+  insights: MLInsightsResponse | null;
+  token?: string;
+}
+
+export function ReportsTab({ analysis, anomaly, insights, token }: Props) {
   return (
     <div className="flex w-full flex-col gap-6">
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="ml">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="ml">ML Insights</TabsTrigger>
         </TabsList>
-        <TabsContent className="space-y-6" value="overview">
-          <div className="grid grid-cols-2 gap-6">
-            <ReportsNetWorth />
-            <ReportsMonthComparison />
-          </div>
-          <ReportsTransactions />
-        </TabsContent>
-        <TabsContent className="grid grid-cols-2 gap-6" value="categories">
-          <ReportsCategoriesPie />
-          <ReportsMonthComparison />
-        </TabsContent>
-        <TabsContent className="space-y-6" value="trends">
-          <ReportsSavingRate />
-          <ReportsTrendsMetrics />
+
+        <TabsContent className="space-y-6" value="ml">
+          <MLInsightsPanel
+            analysis={analysis}
+            anomaly={anomaly}
+            insights={insights}
+            token={token}
+          />
         </TabsContent>
       </Tabs>
     </div>

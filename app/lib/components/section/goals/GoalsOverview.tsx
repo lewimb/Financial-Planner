@@ -1,28 +1,24 @@
-import { TrendingUp, Target, Calendar } from "lucide-react";
+import { Target, Calendar } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { formatRupiah } from "~/lib/utils/currencyFormatter";
 
-export default function GoalsOverview() {
+interface Props {
+  total_goals: number;
+  savings: number;
+}
+
+export default function GoalsOverview({ total_goals, savings }: Props) {
   const summary = [
     {
       label: "Active Goals",
-      value: 4,
+      value: total_goals ?? 0,
       subtitle: "2 completed this year",
       icon: Target,
       color: "blue",
     },
     {
-      label: "Total Expenses",
-      value: formatRupiah(200),
-      subtitle: "Across all goals",
-      icon: TrendingUp,
-      color: "green",
-      currency: "USD",
-    },
-    {
-      label: "Net Savings",
-      value: 14,
-      subtitle: "Emergency Fund - $10,000",
+      label: "Accummulated ",
+      value: formatRupiah(savings ?? 0),
       icon: Calendar,
       color: "purple",
       currency: "USD",
@@ -65,13 +61,13 @@ export default function GoalsOverview() {
             <div
               className={cn(
                 "p-4 rounded-full",
-                `${colorMap[item.color as color].bg}`
+                `${colorMap[item.color as color].bg}`,
               )}
             >
               <item.icon
                 className={cn(
                   "size-6",
-                  `${colorMap[item.color as color].text}`
+                  `${colorMap[item.color as color].text}`,
                 )}
               />
             </div>
