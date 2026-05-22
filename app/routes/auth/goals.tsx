@@ -5,7 +5,7 @@ import GoalsList from "~/lib/components/section/goals/GoalsList";
 import GoalsMilestone from "../../lib/components/section/goals/GoalsMilestone";
 import type { Goal } from "~/lib/types/goals";
 import { GoalsFields } from "~/lib/components/section/goals/GoalsForm";
-import type { Route } from "../+types/layout";
+import type { Route } from "./+types/goals";
 import { data } from "react-router";
 import tokenParser from "~/lib/utils/tokenParser";
 import type { GoalOverview } from "~/lib/types/goals";
@@ -24,14 +24,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     const { token } = tokenParser(request);
     const baseUrl = process.env.VITE_REACT_BASE_API_URL;
 
-    const [goalsRes, overviewRes, milestonesRes] = await Promise.all([
+    const [goalsRes, overviewRes] = await Promise.all([
       fetch(`${baseUrl}/auth/v1/goals`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((val) => val.json()),
       fetch(`${baseUrl}/auth/v1/goals/overview`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((val) => val.json()),
-      fetch(`${baseUrl}/auth/v1/goals/milestones`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then((val) => val.json()),
     ]);
@@ -39,7 +36,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     return {
       data: goalsRes.data,
       dataOverview: overviewRes.data,
-      milestones: Array.isArray(milestonesRes) ? milestonesRes : [],
+      milestones: overviewRes.data?.goals ?? [],
       status: true,
     };
   } catch (err) {
@@ -76,17 +73,14 @@ export async function action({ request }: Route.ActionArgs) {
 
     const baseUrl = process.env.VITE_REACT_BASE_API_URL;
     try {
-      const response = await fetch(
-        `${baseUrl}/auth/v1/goals/${id}/contribute`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ amount: total }),
+      const response = await fetch(`${baseUrl}/auth/v1/goals/contribute`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      ).then((val) => val.json());
+        body: JSON.stringify({ goal_id: Number(id), contribution: total }),
+      }).then((val) => val.json());
 
       return data({ data: response }, { status: 200 });
     } catch {
