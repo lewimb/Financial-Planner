@@ -5,13 +5,20 @@ import SettingsNotification from "./SettingsNotification";
 import PushNotifications from "./SettingsPushNotifications";
 import { SettingsSecurity } from "./SettingsSecurity";
 import { SettingsDangerZone } from "./SettingsDangerZone";
+import { SettingsFinancialProfile } from "./SettingsFinancialProfile";
+import type { FinancialProfile } from "~/lib/types/financial-profile";
 
-export function SettingsTab() {
+interface Props {
+  profile: FinancialProfile | null;
+}
+
+export function SettingsTab({ profile }: Props) {
   return (
-    <div className="flex w-full  flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <Tabs defaultValue="account">
         <TabsList>
           <TabsTrigger value="account">Profile</TabsTrigger>
+          <TabsTrigger value="financial">Financial Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
@@ -22,6 +29,16 @@ export function SettingsTab() {
             </CardHeader>
             <CardContent className="grid gap-6">
               <SettingsProfileForm />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="financial">
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SettingsFinancialProfile profile={profile} />
             </CardContent>
           </Card>
         </TabsContent>
