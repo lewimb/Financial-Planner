@@ -78,7 +78,9 @@ export default function BudgetBreakdown({ items, total }: Props) {
                   <span className="text-muted-foreground">{item.category}</span>
 
                   <div className="space-x-3">
-                    <span className="font-semibold">{item.spending}</span>
+                    <span className="font-semibold">
+                      {new Intl.NumberFormat("id-ID").format(item.spending)}
+                    </span>
 
                     <span className="text-xs text-muted-foreground">
                       {percent}%
