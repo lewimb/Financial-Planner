@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(del *)",
+      "PowerShell(Remove-Item *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git add *)",
+      "Bash(dont'ask anything, just do it)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\Lewi\\\\Desktop\\\\FinancialPlanning\\\\financial-planning\\\\app\\\\lib\\\\components\\\\section\\\\settings\" -File)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Lewi\\\\Desktop\\\\FinancialPlanning\\\\financial-planning\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
+    ]
+  }
+}
