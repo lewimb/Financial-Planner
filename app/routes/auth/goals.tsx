@@ -22,7 +22,7 @@ interface LoaderData {
 export async function loader({ request }: Route.LoaderArgs) {
   try {
     const { token } = tokenParser(request);
-    const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+    const baseUrl = process.env.API_BASE_URL;
 
     const [goalsRes, overviewRes] = await Promise.all([
       fetch(`${baseUrl}/auth/v1/goals`, {
@@ -71,7 +71,7 @@ export async function action({ request }: Route.ActionArgs) {
     const currentAmount = Number(fd.get("current_amount") ?? 0);
     const total = currentAmount + contributionDelta;
 
-    const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+    const baseUrl = process.env.API_BASE_URL;
     try {
       const response = await fetch(`${baseUrl}/auth/v1/goals/contribute`, {
         method: "PATCH",
@@ -91,7 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "delete") {
     const fd = await formData;
     const id = fd.get("id") as string;
-    const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+    const baseUrl = process.env.API_BASE_URL;
     try {
       await fetch(`${baseUrl}/auth/v1/goals/${id}`, {
         method: "DELETE",

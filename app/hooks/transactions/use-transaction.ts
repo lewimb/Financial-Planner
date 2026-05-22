@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TransactionForm } from "~/lib/types/transaction";
 import { toast } from "sonner";
 
-// const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
+// const baseApi = process.env.API_BASE_URL || "";
 
 export function useGetTransactionById(
   token: string | undefined,
@@ -26,7 +26,6 @@ export function useGetTransactionById(
       const response = await fetch(
         `${baseApi}/auth/v1/transactions?${params.toString()}`,
         {
-          credentials: "include",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -51,7 +50,6 @@ export function useCreateTransaction(token: string, baseApi: String) {
     mutationFn: (value: TransactionForm) =>
       fetch(`${baseApi}/auth/v1/transactions`, {
         method: "POST",
-        credentials: "include",
         body: JSON.stringify(value),
         headers: {
           Authorization: `Bearer ${token}`,
@@ -82,7 +80,6 @@ export function useDeleteTransaction(
     mutationFn: (id: string) =>
       fetch(`${baseApi}/auth/v1/transactions/${id}`, {
         method: "DELETE",
-        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
         },

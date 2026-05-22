@@ -67,7 +67,7 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
     try {
       const res = await fetch(
         `${baseApi}/auth/v1/ml/forecast?periods=${periods}`,
-        { credentials: "include", headers: { Authorization: `Bearer ${token}` } },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.status === 503) {
         setUnavailable(true);

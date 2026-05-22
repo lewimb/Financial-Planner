@@ -15,7 +15,7 @@ import {
 
 export async function loader({ request }: Route.LoaderArgs) {
   try {
-    const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
+    const baseApi = process.env.API_BASE_URL || "";
     const { token } = tokenParser(request);
     const [data, usageData, monthlyExpense] = await Promise.all([
       GetBudgets(token, baseApi),
@@ -55,7 +55,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const baseApi = process.env.VITE_REACT_BASE_API_URL || "";
+  const baseApi = process.env.API_BASE_URL || "";
 
   if (request.method === "POST" || request.method === "PUT") {
     const formData = await request.json();

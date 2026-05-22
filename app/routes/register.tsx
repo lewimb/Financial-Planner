@@ -27,7 +27,7 @@ interface ActionData {
 }
 
 export async function action({ request }: Route.ActionArgs): Promise<ActionData | Response> {
-  const baseApi = process.env.VITE_REACT_BASE_API_URL ?? "";
+  const baseApi = process.env.API_BASE_URL ?? "";
   const formData = await request.formData();
 
   const raw = {

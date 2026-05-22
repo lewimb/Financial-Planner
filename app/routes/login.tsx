@@ -17,7 +17,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const response = await fetch(`${baseUrl}/v1/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(user),
     });
 

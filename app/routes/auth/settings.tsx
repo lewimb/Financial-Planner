@@ -11,7 +11,7 @@ interface LoaderData {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = tokenParser(request);
-  const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+  const baseUrl = process.env.API_BASE_URL;
 
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -55,7 +55,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (Object.keys(errors).length > 0)
       return data({ errors, success: false }, { status: 400 });
 
-    const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+    const baseUrl = process.env.API_BASE_URL;
     const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
       method: "POST",
       headers: {

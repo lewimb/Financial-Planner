@@ -48,7 +48,7 @@ const threshold = [
 ];
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const baseUrl = process.env.VITE_REACT_BASE_API_URL;
+  const baseUrl = process.env.API_BASE_URL;
   const { token } = tokenParser(request);
 
   if (!token || !params.id || !baseUrl) throw redirect("/auth/budgets");
@@ -69,7 +69,7 @@ export async function action({ request }: Route.ActionArgs) {
     let formData = await request.formData();
 
     const id = Number((formData.get("id") as string) || 0);
-    const baseUrl = process.env.VITE_REACT_BASE_API_URL || "";
+    const baseUrl = process.env.API_BASE_URL || "";
 
     if (!baseUrl) {
       return null;
