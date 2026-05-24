@@ -1,20 +1,13 @@
 import { Outlet, redirect } from "react-router";
-import tokenParser from "~/lib/utils/tokenParser";
 import type { Route } from "../+types/root";
+import { getToken } from "~/lib/utils/tokenStore";
 
-export function loader({ request }: Route.LoaderArgs) {
-  const parser = tokenParser(request);
-  const url = new URL(request.url);
-  if (parser?.token === "" || parser?.isExpired) {
-    if (url.pathname !== "/login" && url.pathname !== "/register")
-      throw redirect("/login");
-  }
-  if (parser?.token && !parser.isExpired) {
-    throw redirect("/auth");
-  }
+export function clientLoader(_: Route.ClientLoaderArgs) {
+  if (getToken()) throw redirect("/auth");
+  return null;
 }
 
-export default function layout() {
+export default function Layout() {
   return (
     <main>
       <div className="p-6">

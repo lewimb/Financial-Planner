@@ -2,21 +2,24 @@ import { Outlet, redirect } from "react-router";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/lib/components/AppSidebar";
 import type { Route } from "../+types/layout";
-import tokenParser from "~/lib/utils/tokenParser";
+import { getToken } from "~/lib/utils/tokenStore";
+import Loading from "~/lib/components/shared/Loading";
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { token, isExpired } = tokenParser(request);
-
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
   if (!token) throw redirect("/login");
-  if (isExpired) throw redirect("/login");
 
-  const baseUrl = process.env.API_BASE_URL || "";
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (res.status === 404) throw redirect("/onboarding");
 
   return null;
+}
+
+export function HydrateFallback() {
+  return <Loading />;
 }
 
 export default function Layout() {
