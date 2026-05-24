@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
+import {
+  Form,
+  Link,
+  redirect,
+  useNavigation,
+  useSearchParams,
+} from "react-router";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
@@ -13,6 +19,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   try {
     const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL;
+    console.log("baseUrl:", baseUrl);
     const response = await fetch(`${baseUrl}/v1/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +105,10 @@ export default function Login() {
 
         <p className="text-center text-sm text-neutral-600">
           Don't have an account?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
+          <Link
+            to="/register"
+            className="font-medium text-primary hover:underline"
+          >
             Create one
           </Link>
         </p>
