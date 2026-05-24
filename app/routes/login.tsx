@@ -12,6 +12,7 @@ import { Button } from "~/components/ui/button";
 import type { Route } from "../+types/root";
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
+import { setToken, setUser } from "~/lib/utils/tokenStore";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -19,11 +20,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   try {
     const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL;
-    console.log("baseUrl:", baseUrl);
     const response = await fetch(`${baseUrl}/v1/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(user),
     });
 
@@ -33,10 +32,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     const data = await response.json();
-    if (data) {
+
+    if (data?.accessToken) {
+      setToken(data.accessToken);
+      setUser(data.user ?? null);
       toast.success("Login successful", { position: "top-right" });
       return redirect("/auth/");
     }
+
+    toast.error("Unexpected response from server", { position: "top-right" });
   } catch {
     toast.error("Network error. Please try again.", { position: "top-right" });
   }
@@ -105,10 +109,7 @@ export default function Login() {
 
         <p className="text-center text-sm text-neutral-600">
           Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="font-medium text-primary hover:underline"
-          >
+          <Link to="/register" className="font-medium text-primary hover:underline">
             Create one
           </Link>
         </p>
