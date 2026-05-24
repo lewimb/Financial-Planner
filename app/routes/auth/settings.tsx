@@ -1,22 +1,24 @@
 import Header from "~/lib/components/shared/Header";
 import { SettingsTab } from "../../lib/components/section/settings/SettingsTab";
 import type { Route } from "./+types/settings";
-import tokenParser from "~/lib/utils/tokenParser";
 import type { FinancialProfile } from "~/lib/types/financial-profile";
-import { data } from "react-router";
+import { data, redirect } from "react-router";
+import { getToken } from "~/lib/utils/tokenStore";
 
 interface LoaderData {
   profile: FinancialProfile | null;
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { token } = tokenParser(request);
-  const baseUrl = process.env.API_BASE_URL || "";
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token) throw redirect("/login");
 
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  if (res.status === 401) throw redirect("/login");
   if (res.ok) {
     const body = await res.json();
     return { profile: body.data as FinancialProfile };
@@ -24,8 +26,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { profile: null };
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { token } = tokenParser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const token = getToken();
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -55,7 +57,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (Object.keys(errors).length > 0)
       return data({ errors, success: false }, { status: 400 });
 
-    const baseUrl = process.env.API_BASE_URL || "";
+    const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
     const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
       method: "POST",
       headers: {
@@ -74,6 +76,7 @@ export async function action({ request }: Route.ActionArgs) {
       }),
     });
 
+    if (res.status === 401) throw redirect("/login");
     if (!res.ok) {
       const body = await res
         .json()

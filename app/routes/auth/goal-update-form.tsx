@@ -10,40 +10,39 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { DatePicker } from "~/lib/components/shared/DatePicker";
 import type { Route } from "./+types/goal-update-form.tsx";
-import tokenParser from "~/lib/utils/tokenParser";
 import { Button } from "~/components/ui/button";
 import { redirect, useFetcher, useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Goal } from "~/lib/types/goals";
+import { getToken } from "~/lib/utils/tokenStore";
 
 interface LoaderData {
   data: Goal | null;
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token || !params?.id) throw redirect("/auth/goals");
+
+  const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
   try {
-    const baseApi = process.env.API_BASE_URL || "";
-    const accessToken = tokenParser(request);
-    if (!accessToken || !params?.id || !baseApi) throw redirect("/auth/goals");
-
-    const res: { data: Goal } = await fetch(
-      `${baseApi}/auth/v1/goals/${params?.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-        },
-      },
-    ).then((val) => val.json());
-
-    return { data: res.data, err: null, status: true };
+    const res = await fetch(`${baseApi}/auth/v1/goals/${params.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) throw redirect("/login");
+    const json: { data: Goal } = await res.json();
+    return { data: json.data, err: null, status: true };
   } catch (err) {
-    console.log(err);
-    return { data: null, err: err, status: false };
+    if (err instanceof Response) throw err;
+    return { data: null, err, status: false };
   }
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({
+  request,
+  params,
+}: Route.ClientActionArgs) {
   const errors: {
     name?: string;
     description?: string;
@@ -59,173 +58,123 @@ export async function action({ request }: Route.ActionArgs) {
     const deadline = formData.get("target_date") as string;
     const id = formData.get("id") as string;
 
-    if (!name) {
-      errors.name = "Please insert the name of the goal";
-    }
-
-    if (!description) {
-      errors.description = "Please insert the description";
-    }
-
-    if (!target_amount) {
-      errors.target_amount = "Please insert the target amount";
-    } else if (isNaN(Number(target_amount)) || Number(target_amount) <= 0) {
+    if (!name) errors.name = "Please insert the name of the goal";
+    if (!description) errors.description = "Please insert the description";
+    if (!target_amount) errors.target_amount = "Please insert the target amount";
+    else if (isNaN(Number(target_amount)) || Number(target_amount) <= 0)
       errors.target_amount = "Target amount must be a positive number";
-    }
-
-    if (!deadline) {
-      errors.target_date = "Target date is required";
-    } else {
+    if (!deadline) errors.target_date = "Target date is required";
+    else {
       const deadlineDate = new Date(deadline);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      if (isNaN(deadlineDate.getTime())) {
+      if (isNaN(deadlineDate.getTime()))
         errors.target_date = "Invalid date format";
-      } else if (deadlineDate < today) {
+      else if (deadlineDate < today)
         errors.target_date = "Target date cannot be in the past";
-      }
     }
 
-    if (Object.keys(errors).length > 0) {
-      return { errors, status: false };
-    }
+    if (Object.keys(errors).length > 0) return { errors, status: false };
 
-    const baseApi = process.env.API_BASE_URL || "";
-    const accessToken = tokenParser(request);
+    const token = getToken();
+    const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
 
     const res = await fetch(`${baseApi}/auth/v1/goals/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken.token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         name,
         description,
         target_amount: Number(target_amount),
-        deadline,
+        deadline: new Date(deadline),
       }),
-    }).then((val) => val.json());
+    });
 
-    toast.success("Successfully update the data");
+    if (res.status === 401) throw redirect("/login");
+    if (!res.ok) return { errors: { form: "Update failed" }, status: false };
 
     return { errors: null, status: true };
   } catch (err) {
-    console.error(err);
-    toast.error(
-      err instanceof Error ? err.message : "Unexpected error occurred",
-    );
-    return { errors, status: false };
+    if (err instanceof Response) throw err;
+    return { errors: { form: "Something went wrong" }, status: false };
   }
 }
 
 export default function GoalUpdateForm({ loaderData }: Route.ComponentProps) {
-  const fetcher = useFetcher<typeof action>();
+  const goal = (loaderData as unknown as LoaderData)?.data;
+  const fetcher = useFetcher();
   const navigate = useNavigate();
-  const { data } = (loaderData as unknown as LoaderData) || {
-    data: null,
-  };
-
-  const [date, setDate] = useState<Date>(
-    new Date(String(data?.deadline)) ?? new Date(),
+  const [targetDate, setTargetDate] = useState<Date | undefined>(
+    goal?.deadline ? new Date(goal.deadline) : undefined,
   );
 
-  const errors = fetcher.data?.errors;
-  const isSubmitting = fetcher.state === "submitting";
+  const actionData = fetcher.data as
+    | { errors: Record<string, string> | null; status: boolean }
+    | undefined;
+
+  if (actionData?.status === true) {
+    toast.success("Goal updated successfully", { position: "top-right" });
+    navigate("/auth/goals");
+  }
 
   return (
-    <div className="w-full max-w-md">
-      <fetcher.Form method="post">
-        <input type="hidden" name="id" value={data?.id} />
+    <fetcher.Form method="post">
+      <FieldSet>
+        <FieldLegend>Update Goal</FieldLegend>
         <FieldGroup>
-          <FieldSet>
-            <FieldLegend className="font-semibold text-2xl">
-              Create new goals
-            </FieldLegend>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="goal-name">Goal Name</FieldLabel>
-                <Input
-                  id="goal-name"
-                  name="name"
-                  placeholder="e.g., Emergency Fund"
-                  defaultValue={data?.name}
-                  className={errors?.name ? "border-red-500" : ""}
-                />
-                {errors?.name && (
-                  <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-                )}
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="description">Description</FieldLabel>
-                <Textarea
-                  id="description"
-                  name="description"
-                  defaultValue={data?.description}
-                  className={`h-25 resize-none ${errors?.description ? "border-red-500" : ""}`}
-                />
-                {errors?.description && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.description}
-                  </p>
-                )}
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="target-amount">Target Amount</FieldLabel>
-                <Input
-                  id="target-amount"
-                  name="target_amount"
-                  placeholder="Input Target (10.000 Rp)"
-                  defaultValue={data?.target_amount}
-                  className={errors?.target_amount ? "border-red-500" : ""}
-                />
-                {errors?.target_amount && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.target_amount}
-                  </p>
-                )}
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="target-date">Target Date</FieldLabel>
-                <input
-                  type="hidden"
-                  name="target_date"
-                  value={date.toISOString()}
-                />
-                <DatePicker
-                  onChange={(d) => setDate(d ?? new Date())}
-                  defaultValue={date}
-                />
-                {errors?.target_date && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.target_date}
-                  </p>
-                )}
-              </Field>
-            </FieldGroup>
-          </FieldSet>
-
-          <Field orientation="horizontal">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/auth/goals");
-              }}
-              variant="outline"
-              type="button"
-            >
-              Cancel
-            </Button>
+          <Field>
+            <FieldLabel>Name</FieldLabel>
+            <Input name="name" defaultValue={goal?.name ?? ""} />
+            {actionData?.errors?.name && (
+              <p className="text-sm text-destructive">{actionData.errors.name}</p>
+            )}
           </Field>
+          <Field>
+            <FieldLabel>Description</FieldLabel>
+            <Textarea name="description" defaultValue={goal?.description ?? ""} />
+            {actionData?.errors?.description && (
+              <p className="text-sm text-destructive">
+                {actionData.errors.description}
+              </p>
+            )}
+          </Field>
+          <Field>
+            <FieldLabel>Target Amount</FieldLabel>
+            <Input
+              name="target_amount"
+              type="number"
+              defaultValue={goal?.target_amount ?? ""}
+            />
+            {actionData?.errors?.target_amount && (
+              <p className="text-sm text-destructive">
+                {actionData.errors.target_amount}
+              </p>
+            )}
+          </Field>
+          <Field>
+            <FieldLabel>Target Date</FieldLabel>
+            <DatePicker
+              onChange={setTargetDate}
+              handleBlur={() => {}}
+              name="target_date"
+              isInvalid={!!actionData?.errors?.target_date}
+              defaultValue={targetDate}
+            />
+            {actionData?.errors?.target_date && (
+              <p className="text-sm text-destructive">
+                {actionData.errors.target_date}
+              </p>
+            )}
+          </Field>
+          <input type="hidden" name="id" value={goal?.id ?? ""} />
+          <Button type="submit" disabled={fetcher.state === "submitting"}>
+            {fetcher.state === "submitting" ? "Saving..." : "Save Changes"}
+          </Button>
         </FieldGroup>
-      </fetcher.Form>
-    </div>
+      </FieldSet>
+    </fetcher.Form>
   );
 }

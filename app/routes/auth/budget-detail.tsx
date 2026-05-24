@@ -1,8 +1,5 @@
-import { Form } from "react-router";
+import { Form, redirect } from "react-router";
 import type { Route } from "./+types/budget-detail";
-import tokenParser from "~/lib/utils/tokenParser";
-import { GetBudgetById, UpdateBudget } from "~/actions/budgets";
-import { redirect } from "react-router";
 import type {
   UpdateBudgetRequest,
   UpdateBudgetResponse,
@@ -19,6 +16,7 @@ import { categoryOptions } from "~/lib/utils/objectFormatter";
 import { Input } from "~/components/ui/input";
 import { DialogFooter } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
+import { getToken } from "~/lib/utils/tokenStore";
 
 const periods = [
   { value: "MONTHLY", label: "Monthly" },
@@ -47,33 +45,32 @@ const threshold = [
   { value: 90, label: "90% of budget" },
 ];
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const baseUrl = process.env.API_BASE_URL;
-  const { token } = tokenParser(request);
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token || !params.id) throw redirect("/auth/budgets");
 
-  if (!token || !params.id || !baseUrl) throw redirect("/auth/budgets");
-
-  const { data }: { data: UpdateBudgetResponse } = await GetBudgetById(
-    Number(params.id),
-    token,
-    baseUrl,
-  );
-
-  return data;
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
+  try {
+    const response = await fetch(`${baseUrl}/auth/v1/budgets/${params.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 401) throw redirect("/login");
+    if (!response.ok) throw redirect("/auth/budgets");
+    const { data }: { data: UpdateBudgetResponse } = await response.json();
+    return data;
+  } catch (err) {
+    if (err instanceof Response) throw err;
+    throw redirect("/auth/budgets");
+  }
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const token = getToken();
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
+
   try {
-    const payload = tokenParser(request);
-
-    let formData = await request.formData();
-
+    const formData = await request.formData();
     const id = Number((formData.get("id") as string) || 0);
-    const baseUrl = process.env.API_BASE_URL || "";
-
-    if (!baseUrl) {
-      return null;
-    }
 
     const requestData: UpdateBudgetRequest = {
       category: formData.get("category") as string,
@@ -81,16 +78,26 @@ export async function action({ request }: Route.ActionArgs) {
       alertThreshold: Number(formData.get("alertThreshold") as string),
     };
 
-    const response = await UpdateBudget(
-      requestData,
-      baseUrl,
-      payload.token,
-      id,
-    );
+    const response = await fetch(`${baseUrl}/auth/v1/budgets/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        limit_amount: requestData.limitAmount,
+        alert_threshold: requestData.alertThreshold,
+        category: requestData.category,
+      }),
+    });
 
-    console.log(response);
+    if (response.status === 401) throw redirect("/login");
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+    return { success: true };
   } catch (err) {
-    console.log(err);
+    if (err instanceof Response) throw err;
+    return { success: false };
   }
 }
 

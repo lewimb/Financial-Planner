@@ -27,8 +27,7 @@ import {
 import Header from "~/lib/components/shared/Header";
 import { formatRupiah } from "~/lib/utils/currencyFormatter";
 import type { MLForecastResponse } from "~/lib/types/ml";
-import type { Route } from "./+types/forecast";
-import tokenParser from "~/lib/utils/tokenParser";
+import { getToken } from "~/lib/utils/tokenStore";
 
 const chartConfig = {
   predicted_amount: {
@@ -45,12 +44,7 @@ const PERIOD_OPTIONS = [
   { value: 90, label: "90 days" },
 ];
 
-export function loader({ request }: Route.LoaderArgs) {
-  return tokenParser(request);
-}
-
-export default function Forecast({ loaderData }: Route.ComponentProps) {
-  const token = loaderData?.token;
+export default function Forecast() {
   const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
 
   const [periods, setPeriods] = useState(30);
@@ -60,6 +54,7 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
   const [unavailable, setUnavailable] = useState(false);
 
   const runForecast = async () => {
+    const token = getToken();
     setLoading(true);
     setError(null);
     setUnavailable(false);
@@ -93,7 +88,6 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
         subtitle="AI-powered spending predictions using Facebook Prophet"
       />
 
-      {/* Controls */}
       <Card>
         <CardHeader>
           <CardTitle>Forecast Settings</CardTitle>
@@ -122,21 +116,18 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
         </CardContent>
       </Card>
 
-      {/* ML service unavailable */}
       {unavailable && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-3">
           <BarChart2 className="size-8 text-muted-foreground" />
           <div>
             <p className="font-semibold">ML Service Unavailable</p>
             <p className="text-sm text-muted-foreground">
-              The Python ML service is currently unreachable. Make sure it is
-              running on port 8000 and try again.
+              The Python ML service is currently unreachable.
             </p>
           </div>
         </div>
       )}
 
-      {/* Error */}
       {error && !unavailable && (
         <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <AlertTriangle className="size-5 text-destructive shrink-0" />
@@ -144,7 +135,6 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* Loading skeleton — persistent for up to 60s */}
       {loading && (
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
@@ -174,10 +164,8 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* Results */}
       {forecast && !loading && (
         <div className="space-y-6">
-          {/* Summary cards */}
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -201,11 +189,6 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
                 <p className="text-2xl font-bold">
                   {Math.round(forecast.confidence * 100)}%
                 </p>
-                {forecast.confidence === 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Need more data points
-                  </p>
-                )}
               </CardContent>
             </Card>
             <Card>
@@ -231,7 +214,6 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
             </Card>
           </div>
 
-          {/* Day-by-day chart */}
           {forecast.daily_forecast.length > 0 && (
             <Card>
               <CardHeader>
@@ -241,7 +223,10 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer className="max-h-80 w-full" config={chartConfig}>
+                <ChartContainer
+                  className="max-h-80 w-full"
+                  config={chartConfig}
+                >
                   <LineChart
                     data={forecast.daily_forecast}
                     margin={{ left: 16, right: 16, top: 8, bottom: 8 }}
@@ -277,26 +262,9 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
               </CardContent>
             </Card>
           )}
-
-          {/* Empty state for daily_forecast */}
-          {forecast.daily_forecast.length === 0 && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 space-y-3">
-                <BarChart2 className="size-8 text-muted-foreground" />
-                <div className="text-center">
-                  <p className="font-semibold">Insufficient Data</p>
-                  <p className="text-sm text-muted-foreground">
-                    Add more transactions to generate a day-by-day forecast.
-                    At least 30 days of history is recommended.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       )}
 
-      {/* Idle state */}
       {!forecast && !loading && !error && !unavailable && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
@@ -304,10 +272,7 @@ export default function Forecast({ loaderData }: Route.ComponentProps) {
             <div className="text-center">
               <p className="font-semibold text-lg">No Forecast Yet</p>
               <p className="text-sm text-muted-foreground max-w-md">
-                Select a forecast period above and click &ldquo;Run
-                Forecast&rdquo;. The model uses Facebook Prophet and may take
-                up to 60 seconds. At least 30 days of transaction history is
-                recommended for accurate results.
+                Select a forecast period above and click "Run Forecast".
               </p>
             </div>
             <Button onClick={runForecast}>Run Forecast ({periods} days)</Button>

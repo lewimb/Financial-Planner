@@ -4,31 +4,39 @@ import BudgetForm from "~/lib/components/section/budget/BudgetForm";
 import BudgetOverview from "~/lib/components/section/budget/BudgetOverview";
 import BudgetCategories from "~/lib/components/section/budget/BudgetCategories";
 import BudgetBreakdown from "../../lib/components/section/budget/BudgetBreakdown";
-import tokenParser from "~/lib/utils/tokenParser";
 import type { Route } from "./+types/budgets";
 import type { BudgetUsage } from "~/lib/types/budgets";
-import {
-  GetBudgets,
-  GetMonthlyExpense,
-  GetUsageBudgets,
-} from "~/actions/budgets";
+import { redirect } from "react-router";
+import { getToken } from "~/lib/utils/tokenStore";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token) throw redirect("/login");
+
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
+  const headers = { Authorization: `Bearer ${token}` };
+  const year = new Date().getFullYear();
+  const month = new Date().getMonth() + 1;
+
   try {
-    const baseApi = process.env.API_BASE_URL || "";
-    const { token } = tokenParser(request);
-    const [data, usageData, monthlyExpense] = await Promise.all([
-      GetBudgets(token, baseApi),
-      GetUsageBudgets(token, baseApi),
-      GetMonthlyExpense(token, baseApi),
+    const [budgetsRes, usageRes, monthlyRes] = await Promise.all([
+      fetch(`${baseUrl}/auth/v1/budgets`, { headers }).then((r) => r.json()),
+      fetch(`${baseUrl}/auth/v1/budgets/usage?year=${year}&month=${month}`, {
+        headers,
+      }).then((r) => r.json()),
+      fetch(`${baseUrl}/auth/v1/transactions/monthly`, { headers }).then((r) =>
+        r.json(),
+      ),
     ]);
-    const usage = (usageData ?? []) as BudgetUsage[];
+
+    const data = budgetsRes?.data ?? [];
+    const usage = (
+      Array.isArray(usageRes) ? usageRes : (usageRes?.data ?? [])
+    ) as BudgetUsage[];
+    const monthlyExpense = monthlyRes?.total ?? 0;
 
     const totalBudget =
-      usage.length > 0
-        ? usage.reduce((acc, val) => acc + val.limit, 0)
-        : 0;
-
+      usage.length > 0 ? usage.reduce((acc, val) => acc + val.limit, 0) : 0;
     const remainingBudget = totalBudget - Number(monthlyExpense);
     const remainingPercentage =
       totalBudget > 0 ? (remainingBudget / totalBudget) * 100 : 0;
@@ -41,8 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       remainingBudget,
       remainingPercentage,
     };
-  } catch (err) {
-    console.error("Error loading budgets:", err);
+  } catch {
     return {
       budgets: [],
       usage: [],
@@ -54,13 +61,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const baseApi = process.env.API_BASE_URL || "";
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const token = getToken();
+  const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
 
   if (request.method === "POST" || request.method === "PUT") {
     const formData = await request.json();
-    const { token } = tokenParser(request);
-
     const payload = {
       category: formData.category,
       period: formData.period,
@@ -85,6 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
         body: JSON.stringify(payload),
       });
 
+      if (response.status === 401) throw redirect("/login");
       if (!response.ok) {
         const error = await response.text();
         return new Response(JSON.stringify({ success: false, error }), {
@@ -96,15 +103,10 @@ export async function action({ request }: Route.ActionArgs) {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      if (error instanceof Response) throw error;
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
+        JSON.stringify({ success: false, error: "Unknown error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
   }
@@ -112,24 +114,22 @@ export async function action({ request }: Route.ActionArgs) {
   if (request.method === "DELETE") {
     const fd = await request.formData();
     const id = fd.get("id") as string;
-    const { token } = tokenParser(request);
     try {
-      await fetch(`${baseApi}/auth/v1/budgets/${id}`, {
+      const response = await fetch(`${baseApi}/auth/v1/budgets/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      return { success: true };
-    } catch {
+      if (response.status === 401) throw redirect("/login");
+      return { success: response.ok };
+    } catch (error) {
+      if (error instanceof Response) throw error;
       return { success: false };
     }
   }
 
   return new Response(
     JSON.stringify({ success: false, error: "Method not allowed" }),
-    {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    },
+    { status: 405, headers: { "Content-Type": "application/json" } },
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { redirect, Form, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/onboarding";
-import tokenParser from "~/lib/utils/tokenParser";
+import { getToken } from "~/lib/utils/tokenStore";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -43,11 +43,11 @@ const RISK_LEVEL_OPTIONS = [
   { value: "high", label: "High" },
 ];
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { token, isExpired } = tokenParser(request);
-  if (!token || isExpired) throw redirect("/login");
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token) throw redirect("/login");
 
-  const baseUrl = process.env.API_BASE_URL || "";
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -56,8 +56,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   return null;
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { token } = tokenParser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const token = getToken();
   const formData = await request.formData();
 
   const monthly_income = Number(formData.get("monthly_income"));
@@ -83,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (Object.keys(errors).length > 0) return { errors, success: false };
 
-  const baseUrl = process.env.API_BASE_URL || "";
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   try {
     const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
       method: "POST",
@@ -126,7 +126,7 @@ export default function Onboarding() {
     debt: "",
   });
   const [step1Errors, setStep1Errors] = useState<Record<string, string>>({});
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 

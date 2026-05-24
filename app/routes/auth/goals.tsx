@@ -6,31 +6,30 @@ import GoalsMilestone from "../../lib/components/section/goals/GoalsMilestone";
 import type { Goal } from "~/lib/types/goals";
 import { GoalsFields } from "~/lib/components/section/goals/GoalsForm";
 import type { Route } from "./+types/goals";
-import { data } from "react-router";
-import tokenParser from "~/lib/utils/tokenParser";
+import { data, redirect } from "react-router";
 import type { GoalOverview } from "~/lib/types/goals";
-import { createGoals } from "./actions";
+import { getToken } from "~/lib/utils/tokenStore";
 
 interface LoaderData {
   data: Goal[] | null;
   dataOverview: GoalOverview | null;
   milestones: Goal[] | null;
   status: boolean;
-  errors: string | null;
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  try {
-    const { token } = tokenParser(request);
-    const baseUrl = process.env.API_BASE_URL || "";
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token) throw redirect("/login");
 
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
+  const headers = { Authorization: `Bearer ${token}` };
+
+  try {
     const [goalsRes, overviewRes] = await Promise.all([
-      fetch(`${baseUrl}/auth/v1/goals`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((val) => val.json()),
-      fetch(`${baseUrl}/auth/v1/goals/overview`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((val) => val.json()),
+      fetch(`${baseUrl}/auth/v1/goals`, { headers }).then((r) => r.json()),
+      fetch(`${baseUrl}/auth/v1/goals/overview`, { headers }).then((r) =>
+        r.json(),
+      ),
     ]);
 
     return {
@@ -39,49 +38,68 @@ export async function loader({ request }: Route.LoaderArgs) {
       milestones: overviewRes.data?.goals ?? [],
       status: true,
     };
-  } catch (err) {
-    console.error(err);
+  } catch {
     return { status: false, data: null, dataOverview: null, milestones: [] };
   }
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const formData = request.formData();
-  const { token } = tokenParser(request);
-  const intent = (await formData).get("intent");
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const token = getToken();
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
+  const fd = await request.formData();
+  const intent = fd.get("intent");
 
   if (intent === "post") {
-    const response = await createGoals(formData, token);
+    const name = fd.get("name") as string;
+    const description = fd.get("description") as string;
+    const target_amount = fd.get("target_amount") as string;
+    const target_date = fd.get("target_date") as string;
 
-    if (response?.status === 500) {
+    const errors: Record<string, string> = {};
+    if (!name) errors.name = "Please input the name of the goal";
+    if (!description) errors.description = "Please input the description";
+    if (!target_amount) errors.target_amount = "Please input the target amount";
+    else if (isNaN(Number(target_amount)))
+      errors.target_amount = "Must be a number";
+    if (!target_date) errors.target_date = "Please input the target date";
+
+    if (Object.keys(errors).length > 0)
+      return data({ errors }, { status: 400 });
+
+    try {
+      const response = await fetch(`${baseUrl}/auth/v1/goals`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name,
+          description,
+          target_amount: Number(target_amount),
+          deadline: new Date(target_date),
+        }),
+      }).then((r) => r.json());
+      return data({ data: response }, { status: 200 });
+    } catch {
       return data({ error: "Something went wrong" }, { status: 500 });
-    }
-    if (response?.status === 400) {
-      return data({ errors: response?.errors }, { status: 400 });
-    }
-    if (response?.status === 200) {
-      return data({ data: response.data }, { status: 200 });
     }
   }
 
   if (intent === "contribution") {
-    const fd = await formData;
     const id = fd.get("id") as string;
     const contributionDelta = Number(fd.get("contribution"));
     const currentAmount = Number(fd.get("current_amount") ?? 0);
     const total = currentAmount + contributionDelta;
 
-    const baseUrl = process.env.API_BASE_URL || "";
     try {
       const response = await fetch(`${baseUrl}/auth/v1/goals/contribute`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({ goal_id: Number(id), contribution: total }),
-      }).then((val) => val.json());
-
+      }).then((r) => r.json());
       return data({ data: response }, { status: 200 });
     } catch {
       return data({ error: "Something went wrong" }, { status: 500 });
@@ -89,9 +107,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "delete") {
-    const fd = await formData;
     const id = fd.get("id") as string;
-    const baseUrl = process.env.API_BASE_URL || "";
     try {
       await fetch(`${baseUrl}/auth/v1/goals/${id}`, {
         method: "DELETE",

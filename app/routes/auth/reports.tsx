@@ -2,16 +2,16 @@ import ReportsOverview from "~/lib/components/section/reports/ReportsOverview";
 import Header from "../../lib/components/shared/Header";
 import { ReportsTab } from "../../lib/components/section/reports/ReportsTab";
 import type { Route } from "./+types/reports";
-import tokenParser from "~/lib/utils/tokenParser";
+import { redirect } from "react-router";
 import type { DashboardResponse } from "~/lib/types/dashboard";
 import type {
   MLAnalysisResponse,
   MLAnomalyResponse,
   MLInsightsResponse,
 } from "~/lib/types/ml";
+import { getToken } from "~/lib/utils/tokenStore";
 
 interface LoaderData {
-  token: string;
   dashboard: DashboardResponse | null;
   analysis: MLAnalysisResponse | null;
   anomaly: MLAnomalyResponse | null;
@@ -23,14 +23,16 @@ const safeMLFetch = (url: string, headers: Record<string, string>) =>
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { token } = tokenParser(request);
-  const baseUrl = process.env.API_BASE_URL || "";
+export async function clientLoader(_: Route.ClientLoaderArgs) {
+  const token = getToken();
+  if (!token) throw redirect("/login");
+
+  const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   const headers = { Authorization: `Bearer ${token}` };
 
   const [dashboardRes, analysis, anomaly, insights] = await Promise.all([
     fetch(`${baseUrl}/auth/v1/dashboard`, { headers })
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .catch(() => null),
     safeMLFetch(`${baseUrl}/auth/v1/ml/analysis`, headers),
     safeMLFetch(`${baseUrl}/auth/v1/ml/anomaly`, headers),
@@ -38,7 +40,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
 
   return {
-    token,
     dashboard: (dashboardRes?.data as DashboardResponse) ?? null,
     analysis: analysis as MLAnalysisResponse | null,
     anomaly: anomaly as MLAnomalyResponse | null,
@@ -47,8 +48,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Reports({ loaderData }: Route.ComponentProps) {
-  const { token, dashboard, analysis, anomaly, insights } =
-    loaderData as unknown as LoaderData;
+  const { dashboard, analysis, anomaly, insights } =
+    (loaderData as unknown as LoaderData) ?? {
+      dashboard: null,
+      analysis: null,
+      anomaly: null,
+      insights: null,
+    };
 
   return (
     <div className="space-y-6">
@@ -61,7 +67,6 @@ export default function Reports({ loaderData }: Route.ComponentProps) {
         analysis={analysis}
         anomaly={anomaly}
         insights={insights}
-        token={token}
       />
     </div>
   );
