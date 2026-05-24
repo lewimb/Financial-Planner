@@ -4,6 +4,7 @@ import { Input } from "~/components/ui/input";
 import { Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "~/components/ui/avatar";
+import { getToken } from "~/lib/utils/tokenStore";
 
 interface Message {
   id: string;
@@ -27,11 +28,7 @@ const SUGGESTED_QUESTIONS = [
   "How can I improve my spending habits?",
 ];
 
-interface Props {
-  token?: string;
-}
-
-export function ChatInterface({ token }: Props) {
+export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -62,7 +59,7 @@ export function ChatInterface({ token }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({ message: trimmed }),
       });

@@ -1,12 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TransactionForm } from "~/lib/types/transaction";
 import { toast } from "sonner";
-
-// const baseApi = process.env.API_BASE_URL || "";
+import { getToken } from "~/lib/utils/tokenStore";
 
 export function useGetTransactionById(
-  token: string | undefined,
-  baseApi: string | undefined,
+  baseApi: string,
   tab: string | undefined,
 ) {
   const now = new Date();
@@ -15,8 +13,8 @@ export function useGetTransactionById(
 
   return useQuery({
     queryKey: ["transactions", tab],
-
     queryFn: async () => {
+      const token = getToken();
       if (!token) return null;
 
       const params = new URLSearchParams();
@@ -26,64 +24,54 @@ export function useGetTransactionById(
       const response = await fetch(
         `${baseApi}/auth/v1/transactions?${params.toString()}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
+      if (!response.ok) throw new Error("Network response was not ok");
       return await response.json();
     },
-    enabled: !!token,
+    enabled: !!getToken(),
     staleTime: Infinity,
   });
 }
 
-export function useCreateTransaction(token: string, baseApi: String) {
+export function useCreateTransaction(baseApi: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (value: TransactionForm) =>
-      fetch(`${baseApi}/auth/v1/transactions`, {
+    mutationFn: (value: TransactionForm) => {
+      const token = getToken();
+      return fetch(`${baseApi}/auth/v1/transactions`, {
         method: "POST",
         body: JSON.stringify(value),
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-type": "application/json",
         },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transaction created", {
-        position: "top-right",
       });
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transaction created", { position: "top-right" });
+    },
     onError: () => {
-      toast.error("Failed to create transactions", {
-        position: "top-right",
-      });
+      toast.error("Failed to create transactions", { position: "top-right" });
     },
   });
 }
 
-export function useDeleteTransaction(
-  token: string | undefined,
-  baseApi: string,
-) {
+export function useDeleteTransaction(baseApi: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) =>
-      fetch(`${baseApi}/auth/v1/transactions/${id}`, {
+    mutationFn: (id: string) => {
+      const token = getToken();
+      return fetch(`${baseApi}/auth/v1/transactions/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       toast.success("Transaction deleted successfully", {
@@ -95,28 +83,3 @@ export function useDeleteTransaction(
     },
   });
 }
-
-// export function useUpdateTransaction(token: string) {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: (value: Transaction) =>
-//       fetch(`${baseApi}/api/v1/transaction/${value.id}`, {
-//         method: "PUT",
-//         body: JSON.stringify(value),
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           "Content-type": "application/json",
-//         },
-//       }),
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-//       toast.success("Transaction updated successfully", {
-//         position: "top-right",
-//       });
-//     },
-//     onError: () => {
-//       toast.error("Failed to update transaction", { position: "top-right" });
-//     },
-//   });
-// }

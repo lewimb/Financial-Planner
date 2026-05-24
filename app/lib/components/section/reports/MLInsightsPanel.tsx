@@ -32,6 +32,7 @@ import {
   BarChart2,
   Loader2,
 } from "lucide-react";
+import { getToken } from "~/lib/utils/tokenStore";
 
 const forecastChartConfig = {
   predicted_amount: {
@@ -53,10 +54,9 @@ interface Props {
   analysis: MLAnalysisResponse | null;
   anomaly: MLAnomalyResponse | null;
   insights: MLInsightsResponse | null;
-  token?: string;
 }
 
-export function MLInsightsPanel({ analysis, anomaly, insights, token }: Props) {
+export function MLInsightsPanel({ analysis, anomaly, insights }: Props) {
   const [forecast, setForecast] = useState<MLForecastResponse | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export function MLInsightsPanel({ analysis, anomaly, insights, token }: Props) {
     setForecastError(null);
     try {
       const res = await fetch(`${baseApi}/auth/v1/ml/forecast?periods=30`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.status === 503) {
         setForecastError("ML service unavailable. Please try again later.");

@@ -1,10 +1,4 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { ReportsNetWorth } from "./ReportsNetworth";
-import ReportsMonthComparison from "./ReportsMonthComparison";
-import { ReportsTransactions } from "./ReportTransactions";
-import { ReportsCategoriesPie } from "./ReportCategoriesSpending";
-import { ReportsSavingRate } from "./ReportsSavingRate";
-import ReportsTrendsMetrics from "./ReportsTrendsMetric";
 import { MLInsightsPanel } from "./MLInsightsPanel";
 import type {
   MLAnalysisResponse,
@@ -16,10 +10,9 @@ interface Props {
   analysis: MLAnalysisResponse | null;
   anomaly: MLAnomalyResponse | null;
   insights: MLInsightsResponse | null;
-  token?: string;
 }
 
-export function ReportsTab({ analysis, anomaly, insights, token }: Props) {
+export function ReportsTab({ analysis, anomaly, insights }: Props) {
   return (
     <div className="flex w-full flex-col gap-6">
       <Tabs defaultValue="ml">
@@ -32,7 +25,6 @@ export function ReportsTab({ analysis, anomaly, insights, token }: Props) {
             analysis={analysis}
             anomaly={anomaly}
             insights={insights}
-            token={token}
           />
         </TabsContent>
       </Tabs>

@@ -24,7 +24,7 @@ import {
 import { useLocation } from "react-router";
 import { cn } from "../utils";
 import { useNavigate } from "react-router";
-import { clearToken } from "../utils/tokenStore";
+import { clearToken, getUser } from "../utils/tokenStore";
 
 const items = [
   {
@@ -72,6 +72,7 @@ const items = [
 export function AppSidebar() {
   const currentPath = useLocation().pathname.split("auth")[1] || "/";
   const navigate = useNavigate();
+  const user = getUser();
 
   return (
     <Sidebar>
@@ -127,8 +128,8 @@ export function AppSidebar() {
             loading="lazy"
           />
           <div>
-            <p className="font-semibold">John Doe</p>
-            <p className="text-sm text-neutral-500">johndoe@email.com</p>
+            <p className="font-semibold">{user?.name ?? "—"}</p>
+            <p className="text-sm text-neutral-500">{user?.email ?? ""}</p>
           </div>
         </div>
       </SidebarFooter>
