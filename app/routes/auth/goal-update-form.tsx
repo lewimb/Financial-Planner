@@ -23,7 +23,7 @@ interface LoaderData {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const baseApi = process.env.API_BASE_URL;
+    const baseApi = process.env.API_BASE_URL || "";
     const accessToken = tokenParser(request);
     if (!accessToken || !params?.id || !baseApi) throw redirect("/auth/goals");
 
@@ -91,7 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
       return { errors, status: false };
     }
 
-    const baseApi = process.env.API_BASE_URL;
+    const baseApi = process.env.API_BASE_URL || "";
     const accessToken = tokenParser(request);
 
     const res = await fetch(`${baseApi}/auth/v1/goals/${id}`, {

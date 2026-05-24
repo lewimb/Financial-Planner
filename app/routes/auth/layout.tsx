@@ -10,7 +10,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!token) throw redirect("/login");
   if (isExpired) throw redirect("/login");
 
-  const baseUrl = process.env.API_BASE_URL;
+  const baseUrl = process.env.API_BASE_URL || "";
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });

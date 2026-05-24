@@ -25,7 +25,7 @@ const safeMLFetch = (url: string, headers: Record<string, string>) =>
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { token } = tokenParser(request);
-  const baseUrl = process.env.API_BASE_URL;
+  const baseUrl = process.env.API_BASE_URL || "";
   const headers = { Authorization: `Bearer ${token}` };
 
   const [dashboardRes, analysis, anomaly, insights] = await Promise.all([

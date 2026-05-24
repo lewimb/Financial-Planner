@@ -47,7 +47,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { token, isExpired } = tokenParser(request);
   if (!token || isExpired) throw redirect("/login");
 
-  const baseUrl = process.env.API_BASE_URL;
+  const baseUrl = process.env.API_BASE_URL || "";
   const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -83,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (Object.keys(errors).length > 0) return { errors, success: false };
 
-  const baseUrl = process.env.API_BASE_URL;
+  const baseUrl = process.env.API_BASE_URL || "";
   try {
     const res = await fetch(`${baseUrl}/auth/v1/financial-profile`, {
       method: "POST",

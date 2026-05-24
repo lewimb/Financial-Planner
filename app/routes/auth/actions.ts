@@ -27,7 +27,7 @@ export async function createGoals(formData: Promise<FormData>, token: string) {
     return { data: null, errors, status: 400 };
   }
 
-  const baseUrl = process.env.API_BASE_URL;
+  const baseUrl = process.env.API_BASE_URL || "";
 
   const payload = {
     name,

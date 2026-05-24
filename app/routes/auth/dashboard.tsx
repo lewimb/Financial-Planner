@@ -12,7 +12,7 @@ import type { DashboardResponse } from "~/lib/types/dashboard";
 export async function loader({ request }: Route.LoaderArgs) {
   try {
     const { token } = tokenParser(request);
-    const baseUrl = process.env.API_BASE_URL;
+    const baseUrl = process.env.API_BASE_URL || "";
 
     const response = await fetch(`${baseUrl}/auth/v1/dashboard`, {
       headers: { Authorization: `Bearer ${token}` },
