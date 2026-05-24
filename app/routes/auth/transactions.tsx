@@ -19,10 +19,10 @@ export function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const baseApi = process.env.API_BASE_URL || "";
+  const { token } = tokenParser(request);
 
   if (request.method === "POST" || request.method === "PUT") {
     const formData = await request.json();
-    const token = formData.token;
 
     try {
       const url =
@@ -34,7 +34,7 @@ export async function action({ request }: Route.ActionArgs) {
         method: request.method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ proper Bearer format
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount: formData.amount,
@@ -109,8 +109,7 @@ export default function Transaction({ loaderData }: Route.ComponentProps) {
         <Modal label="+ Add Transaction">
           {(close) => (
             <TransactionFormTab
-              token={loaderData?.token}
-              onSuccess={close} // ✅ closes modal only on success
+              onSuccess={close}
             />
           )}
         </Modal>
@@ -131,7 +130,6 @@ export default function Transaction({ loaderData }: Route.ComponentProps) {
         </TabsList>
       </Tabs>
       <TransactionTable
-        token={loaderData?.token} // ✅ pass token to table for delete actions
         deleteMethod={handleDelete}
         totalData={data?.total ?? 0}
         items={data?.data ?? []}

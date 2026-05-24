@@ -7,8 +7,7 @@ import { Button } from "~/components/ui/button";
 import TransactionFormTab from "./TransactionFormTab";
 import { Modal } from "../../shared/Modal";
 
-export const getColumns = (token: string): ColumnDef<Transaction>[] => [
-  // ✅ function with token
+export const getColumns = (): ColumnDef<Transaction>[] => [
   {
     accessorKey: "description",
     header: "Description",
@@ -99,12 +98,11 @@ export const getColumns = (token: string): ColumnDef<Transaction>[] => [
               {(close) => (
                 <TransactionFormTab
                   key={row.original.id}
-                  token={token}
                   dialogTitle="Edit Transaction"
                   items={row.original}
                   isUpdate={true}
                   id={row.original.id}
-                  onSuccess={close} // ✅ closes modal only on success
+                  onSuccess={close}
                 />
               )}
             </Modal> */}

@@ -9,8 +9,7 @@ interface Props {
   dialogTitle?: string;
   id?: number;
   isUpdate?: boolean;
-  token: string;
-  onSuccess?: () => void; // ✅ added
+  onSuccess?: () => void;
 }
 
 export default function TransactionFormTab({
@@ -18,8 +17,7 @@ export default function TransactionFormTab({
   dialogTitle = "Add Transaction",
   id,
   isUpdate = false,
-  token,
-  onSuccess, // ✅ added
+  onSuccess,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -34,8 +32,7 @@ export default function TransactionFormTab({
             items={items}
             id={id}
             isUpdate={isUpdate}
-            token={token}
-            onSuccess={onSuccess} // ✅ passed down
+            onSuccess={onSuccess}
           />
         </TabsContent>
         <TabsContent value="income">
@@ -43,8 +40,7 @@ export default function TransactionFormTab({
             items={items}
             id={id}
             isUpdate={isUpdate}
-            token={token}
-            onSuccess={onSuccess} // ✅ passed down
+            onSuccess={onSuccess}
           />
         </TabsContent>
       </Tabs>

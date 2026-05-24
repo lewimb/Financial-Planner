@@ -5,16 +5,14 @@ import type { Response } from "~/lib/types/response";
 
 interface Props {
   deleteMethod: (id: string) => void;
-  token: string; // ✅ added
 }
 
 export default function TransactionTable({
   deleteMethod,
   items,
   totalData,
-  token, // ✅ added
 }: Props & Response<Transaction>) {
-  const columns = getColumns(token); // ✅ call here, not inline
+  const columns = getColumns();
 
   return (
     <div>

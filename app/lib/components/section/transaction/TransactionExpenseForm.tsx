@@ -17,13 +17,11 @@ export default function TransactionExpenseForm({
   items,
   isUpdate = false,
   id,
-  token,
   onSuccess,
 }: {
   items?: Transaction;
   isUpdate?: boolean;
   id?: number;
-  token: string;
   onSuccess?: () => void;
 }) {
   const store = useAppStore();
@@ -63,7 +61,6 @@ export default function TransactionExpenseForm({
         date: new Date(value.date).toISOString(),
         type: value.type,
         userId: store.getState().auth.authUser?.userId ?? 0,
-        token,
       };
 
       if (isUpdate && id) {
