@@ -16,14 +16,14 @@ import { setToken, setUser } from "~/lib/utils/tokenStore";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
-  const user = Object.fromEntries(formData);
+  const credentials = Object.fromEntries(formData);
 
   try {
     const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL;
     const response = await fetch(`${baseUrl}/v1/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user),
+      body: JSON.stringify(credentials),
     });
 
     if (!response.ok) {
@@ -31,11 +31,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       return null;
     }
 
-    const data = await response.json();
+    const body = await response.json();
 
-    if (data?.accessToken) {
-      setToken(data.accessToken);
-      setUser(data.user ?? null);
+    // Support both shapes: { data: { token, user } } and legacy { accessToken, user }
+    const token: string | null = body?.data?.token ?? body?.accessToken ?? null;
+    const authUser = body?.data?.user ?? body?.user ?? null;
+
+    if (token) {
+      setToken(token);
+      setUser(authUser);
       toast.success("Login successful", { position: "top-right" });
       return redirect("/auth/");
     }

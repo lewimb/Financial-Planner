@@ -12,7 +12,12 @@ const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
     cookie: {
       name: "accessToken",
-      secrets: ["s3cret1"],
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 3600,
+      secrets: [process.env.SESSION_SECRET ?? "CHANGE_ME_IN_PRODUCTION"],
     },
   });
 
