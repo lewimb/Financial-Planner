@@ -7,7 +7,7 @@ import { useForm } from "@tanstack/react-form";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { useFetcher } from "react-router";
-import { useAppStore } from "~/hooks";
+import { getUser } from "~/lib/utils/tokenStore";
 import { toast } from "sonner";
 import type { Transaction } from "~/lib/types/transaction";
 import { formSchema } from "~/lib/types/transaction";
@@ -24,7 +24,6 @@ export default function TransactionIncomeForm({
   id?: number;
   onSuccess?: () => void;
 }) {
-  const store = useAppStore();
   const fetcher = useFetcher();
   const isPending = fetcher.state === "submitting";
   const formId = `income-form-${id ?? "new"}`;
@@ -60,7 +59,7 @@ export default function TransactionIncomeForm({
         category: value.category,
         date: new Date(value.date).toISOString(),
         type: value.type,
-        userId: store.getState().auth.authUser?.userId ?? 0,
+        userId: getUser()?.id ?? 0,
       };
 
       if (isUpdate && id) {

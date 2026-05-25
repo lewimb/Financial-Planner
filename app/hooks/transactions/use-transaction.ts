@@ -19,7 +19,7 @@ export function useGetTransactionById(
 
       const params = new URLSearchParams();
       if (month) params.set("month", String(month));
-      params.set("year", String(year));
+      if (year) params.set("year", String(year));
 
       const response = await fetch(
         `${baseApi}/auth/v1/transactions?${params.toString()}`,
@@ -32,7 +32,7 @@ export function useGetTransactionById(
       return await response.json();
     },
     enabled: !!getToken(),
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 2,
   });
 }
 
