@@ -7,3 +7,12 @@
 /build/
 
 .vercel
+
+# Claude Code local config
+.claude/settings.local.json
+
+# Scratch / personal analysis files
+frontend_backend_gap_analysis.md
+skripsi.md
+system_error_audit.md
+teori-pendukung.md
