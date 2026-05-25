@@ -1,7 +1,7 @@
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "~/components/ui/avatar";
 import { getToken } from "~/lib/utils/tokenStore";
@@ -11,6 +11,13 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+}
+
+interface ChatHistoryItem {
+  id: number;
+  question: string;
+  response: string;
+  created_at: string;
 }
 
 const INITIAL_MESSAGE: Message = {
@@ -32,12 +39,57 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const baseApi = import.meta.env.VITE_REACT_BASE_API_URL || "";
 
   useEffect(() => {
+    async function loadHistory() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`${baseApi}/auth/v1/chat/history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const { data }: { data: ChatHistoryItem[] } = await res.json();
+        if (!data || data.length === 0) return;
+        const historyMessages: Message[] = data.flatMap((item) => [
+          {
+            id: `h-user-${item.id}`,
+            role: "user" as const,
+            content: item.question,
+            timestamp: new Date(item.created_at),
+          },
+          {
+            id: `h-assistant-${item.id}`,
+            role: "assistant" as const,
+            content: item.response,
+            timestamp: new Date(item.created_at),
+          },
+        ]);
+        setMessages([INITIAL_MESSAGE, ...historyMessages]);
+      } finally {
+        setHistoryLoaded(true);
+      }
+    }
+    loadHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  async function handleClearHistory() {
+    const token = getToken();
+    if (!token) return;
+    await fetch(`${baseApi}/auth/v1/chat/history`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setMessages([INITIAL_MESSAGE]);
+  }
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -108,9 +160,24 @@ export function ChatInterface() {
     }
   };
 
+  const showClearButton = historyLoaded && messages.length > 1;
+
   return (
     <Card className="flex flex-col w-full h-[700px]">
       <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        {showClearButton && (
+          <div className="flex justify-end px-4 pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive gap-1"
+              onClick={handleClearHistory}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Clear history
+            </Button>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
             <div
