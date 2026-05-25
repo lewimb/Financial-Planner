@@ -106,6 +106,7 @@ export function AppSidebar() {
               <SidebarMenuButton
                 onClick={() => {
                   clearToken();
+                  document.cookie = "accessToken=; Max-Age=0; path=/; SameSite=Lax";
                   navigate("/login");
                 }}
                 className={cn(
@@ -121,12 +122,9 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <div className="hover:bg-neutral-200 rounded-lg duration-300 flex px-3 py-2 gap-2 items-center">
-          <img
-            src="https://wallpapers.com/images/hd/cool-profile-picture-87h46gcobjl5e4xu.jpg"
-            alt="profile picture"
-            className="size-8 rounded-full"
-            loading="lazy"
-          />
+          <div className="size-8 rounded-full bg-neutral-800 text-white flex items-center justify-center text-sm font-semibold shrink-0">
+            {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
+          </div>
           <div>
             <p className="font-semibold">{user?.name ?? "—"}</p>
             <p className="text-sm text-neutral-500">{user?.email ?? ""}</p>
