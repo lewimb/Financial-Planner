@@ -1,4 +1,3 @@
-"use client";
 import {
   FieldGroup,
   FieldSet,
@@ -12,7 +11,7 @@ import { DatePicker } from "~/lib/components/shared/DatePicker";
 import type { Route } from "./+types/goal-update-form.tsx";
 import { Button } from "~/components/ui/button";
 import { redirect, useFetcher, useNavigate } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Goal } from "~/lib/types/goals";
 import { getToken } from "~/lib/utils/tokenStore";
@@ -115,10 +114,13 @@ export default function GoalUpdateForm({ loaderData }: Route.ComponentProps) {
     | { errors: Record<string, string> | null; status: boolean }
     | undefined;
 
-  if (actionData?.status === true) {
-    toast.success("Goal updated successfully", { position: "top-right" });
-    navigate("/auth/goals");
-  }
+  useEffect(() => {
+    if (actionData?.status === true) {
+      toast.success("Goal updated successfully", { position: "top-right" });
+      navigate("/auth/goals");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionData?.status]);
 
   return (
     <fetcher.Form method="post">

@@ -1,4 +1,6 @@
-import { Form, redirect } from "react-router";
+import { Form, redirect, useActionData } from "react-router";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import type { Route } from "./+types/budget-detail";
 import type {
   UpdateBudgetRequest,
@@ -104,6 +106,16 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 export default function UpdateBudgetsForm({
   loaderData,
 }: Route.ComponentProps) {
+  const actionData = useActionData() as { success: boolean } | undefined;
+
+  useEffect(() => {
+    if (actionData?.success === true) {
+      toast.success("Budget updated successfully", { position: "top-right" });
+    } else if (actionData?.success === false) {
+      toast.error("Failed to update budget", { position: "top-right" });
+    }
+  }, [actionData]);
+
   return (
     <Form method="post" className="w-full max-w-lg space-y-6">
       <div className="space-y-1">
@@ -139,7 +151,7 @@ export default function UpdateBudgetsForm({
           <Label className="text-sm font-medium">Budget Amount</Label>
           <Input
             name="limitAmount"
-            defaultValue={loaderData.limitAmount}
+            defaultValue={loaderData.limit_amount}
             placeholder="0.00"
             type="number"
           />
@@ -149,11 +161,11 @@ export default function UpdateBudgetsForm({
           <Label className="text-sm font-medium">Alert Threshold</Label>
           <Select
             name="alertThreshold"
-            defaultValue={String(loaderData.alertThreshold)}
+            defaultValue={String(loaderData.alert_threshold)}
           >
             <SelectTrigger className="w-full">
               <SelectValue
-                defaultValue={String(loaderData.alertThreshold)}
+                defaultValue={String(loaderData.alert_threshold)}
                 placeholder="Select threshold"
               />
             </SelectTrigger>

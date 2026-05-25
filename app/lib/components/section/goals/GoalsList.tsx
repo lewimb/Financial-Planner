@@ -116,9 +116,9 @@ export default function GoalsList({ data }: Props) {
                     </p>
                   </div>
                   <span className="text-muted-foreground text-sm">
-                    {Math.round(
-                      (goal.current_amount / goal.target_amount) * 100,
-                    )}
+                    {goal.target_amount > 0
+                      ? Math.round((goal.current_amount / goal.target_amount) * 100)
+                      : 0}
                     %
                   </span>
                 </div>
