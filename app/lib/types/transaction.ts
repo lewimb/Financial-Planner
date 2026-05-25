@@ -27,6 +27,6 @@ export const formSchema = z.object({
   }),
   description: z.string().min(1, { message: "Description is required" }),
   category: z.string().min(1, { message: "Category is required" }),
-  date: z.date().min(1, { message: "Date is required" }),
+  date: z.date({ error: "Date is required" }),
   type: z.string().min(1, { message: "Transaction types is required" }),
 });

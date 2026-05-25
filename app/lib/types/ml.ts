@@ -27,8 +27,13 @@ export interface MLForecastResponse {
   daily_forecast: MLForecastRecord[];
 }
 
+export interface MLInsightItem {
+  type: string;
+  title: string;
+  description: string;
+  status: "success" | "warning" | "info";
+}
+
 export interface MLInsightsResponse {
-  top_category: string | null;
-  category_breakdown: Record<string, number>;
-  spike_category: string | null;
+  insights: MLInsightItem[];
 }

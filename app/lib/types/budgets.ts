@@ -61,8 +61,8 @@ export interface UpdateBudgetResponse {
   period: string;
   month: number;
   year: number;
-  limitAmount: number;
-  alertThreshold: number;
+  limit_amount: number;
+  alert_threshold: number;
 }
 
 export const formSchema = z
