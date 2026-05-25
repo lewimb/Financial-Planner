@@ -20,17 +20,19 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import type { IncomeExpenseTrendPoint } from "~/lib/types/reports";
 
-const chartData = [
-  { month: "January", income: 186, expense: 80 },
-  { month: "February", income: 305, expense: 200 },
-  { month: "March", income: 237, expense: 120 },
-  { month: "April", income: 73, expense: 190 },
-  { month: "May", income: 209, expense: 130 },
-  { month: "June", income: 214, expense: 140 },
-];
+interface Props {
+  data: IncomeExpenseTrendPoint[];
+}
 
-export default function DashboardGraph() {
+export default function DashboardGraph({ data }: Props) {
+  const chartData = data.map((d) => ({
+    month: d.month_name,
+    income: d.income,
+    expense: d.expense,
+  }));
+
   return (
     <div className="w-full p-6 space-y-4">
       <h3 className="text-2xl font-bold">Income vs Expenses</h3>
