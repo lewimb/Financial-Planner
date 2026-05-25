@@ -32,6 +32,7 @@ import {
   BarChart2,
   Loader2,
 } from "lucide-react";
+import { Skeleton } from "~/components/ui/skeleton";
 import { getToken } from "~/lib/utils/tokenStore";
 
 const forecastChartConfig = {
@@ -54,9 +55,10 @@ interface Props {
   analysis: MLAnalysisResponse | null;
   anomaly: MLAnomalyResponse | null;
   insights: MLInsightsResponse | null;
+  mlLoading?: boolean;
 }
 
-export function MLInsightsPanel({ analysis, anomaly, insights }: Props) {
+export function MLInsightsPanel({ analysis, anomaly, insights, mlLoading }: Props) {
   const [forecast, setForecast] = useState<MLForecastResponse | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState<string | null>(null);
@@ -85,6 +87,26 @@ export function MLInsightsPanel({ analysis, anomaly, insights }: Props) {
       setForecastLoading(false);
     }
   };
+
+  if (mlLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-3 gap-6">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-lg border p-4 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg border p-6 space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      </div>
+    );
+  }
 
   const mlUnavailable = !analysis && !anomaly && !insights;
 
@@ -147,50 +169,6 @@ export function MLInsightsPanel({ analysis, anomaly, insights }: Props) {
         </div>
       )}
 
-      {/* Spending Distribution */}
-      {/* {analysis && Object.keys(analysis.spending_distribution).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="size-4" />
-              Spending Distribution
-            </CardTitle>
-            <CardDescription>
-              Breakdown by category for the period
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(analysis.spending_distribution)
-                .sort(([, a], [, b]) => b - a)
-                .map(([category, amount]) => {
-                  const pct =
-                    analysis.total_expense > 0
-                      ? Math.round((amount / analysis.total_expense) * 100)
-                      : 0;
-                  return (
-                    <div key={category}>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="capitalize font-medium">
-                          {category}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {formatRupiah(amount)} ({pct}%)
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
-      )} */}
 
       {/* ML Insights */}
       {insights && (
@@ -204,57 +182,37 @@ export function MLInsightsPanel({ analysis, anomaly, insights }: Props) {
               Category breakdown and spike detection
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {insights.top_category && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Top Category
-                </span>
-                <span className="font-semibold capitalize">
-                  {insights.top_category}
-                </span>
-              </div>
+          <CardContent className="space-y-3">
+            {insights.insights.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No spending data available for this period.
+              </p>
+            ) : (
+              insights.insights.map((item) => (
+                <div
+                  key={item.type}
+                  className={`p-3 rounded-lg text-sm flex items-start gap-2 ${
+                    item.status === "warning"
+                      ? "bg-destructive/10 border border-destructive/20"
+                      : "bg-muted/50"
+                  }`}
+                >
+                  <AlertTriangle
+                    className={`size-4 mt-0.5 shrink-0 ${
+                      item.status === "warning"
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <div>
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
-            {insights.spike_category && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Spending Spike
-                </span>
-                <Badge variant="destructive" className="capitalize">
-                  {insights.spike_category}
-                </Badge>
-              </div>
-            )}
-            {Object.keys(insights.category_breakdown).length > 0 && (
-              <div className="space-y-2">
-                {Object.entries(insights.category_breakdown)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([category, pct]) => (
-                    <div key={category}>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="capitalize font-medium">
-                          {category}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {pct.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-chart-2"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-            {!insights.top_category &&
-              Object.keys(insights.category_breakdown).length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No spending data available for this period.
-                </p>
-              )}
           </CardContent>
         </Card>
       )}
