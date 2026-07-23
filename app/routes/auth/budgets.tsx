@@ -70,8 +70,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const payload = {
       category: formData.category,
       period: formData.period,
-      month: formData.month ? Number(formData.month) : null,
-      year: Number(formData.year),
+      year:
+        formData.year === null || formData.year === undefined
+          ? null
+          : Number(formData.year),
       limit_amount: Number(formData.limitAmount),
       alert_threshold: Number(formData.alertThreshold),
     };

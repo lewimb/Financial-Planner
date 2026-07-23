@@ -35,27 +35,11 @@ const threshold = [
   { value: "90", label: "90% of budget" },
 ];
 
-const months = [
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
 interface Props {
   items?: CreateBudgetRequest;
   isUpdate?: boolean;
   id?: number;
   onSuccess?: () => void;
-  period?: Period;
 }
 
 export default function BudgetForm({
@@ -63,7 +47,6 @@ export default function BudgetForm({
   isUpdate = false,
   id,
   onSuccess,
-  period = "MONTHLY",
 }: Props) {
   const fetcher = useFetcher();
   const isPending = fetcher.state === "submitting";
@@ -86,8 +69,9 @@ export default function BudgetForm({
       limitAmount: items?.limitAmount ? Number(items.limitAmount) : "",
       period: items?.period || ("" as Period),
       category: items?.category ?? "",
-      month: items?.month ?? "",
-      year: items?.year || new Date().getFullYear().toString(),
+      year: items?.year
+        ? String(items.year)
+        : new Date().getFullYear().toString(),
       alertThreshold: items?.alertThreshold
         ? String(items.alertThreshold)
         : "80",
@@ -100,8 +84,7 @@ export default function BudgetForm({
         limitAmount: Number(value.limitAmount),
         period: value.period,
         category: value.category,
-        month: value.period === "MONTHLY" ? Number(value.month) : null,
-        year: Number(value.year),
+        year: value.period === "YEARLY" ? Number(value.year) : null,
         alertThreshold: Number(value.alertThreshold),
       };
 
@@ -193,54 +176,31 @@ export default function BudgetForm({
           )}
         />
 
-        {/* Month — only visible when period is MONTHLY */}
-        {period === "MONTHLY" && (
-          <form.Field
-            name="month"
-            children={(field) => (
-              <div className="grid gap-2">
-                <Label htmlFor={field.name}>Month</Label>
-                <Select
-                  value={String(field.state.value)}
-                  onValueChange={field.handleChange}
-                >
-                  <SelectTrigger
-                    className="w-full"
-                    id={field.name}
-                    onBlur={field.handleBlur}
-                  >
-                    <SelectValue placeholder="Select month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          />
-        )}
-
-        {/* Year */}
-        <form.Field
-          name="year"
-          children={(field) => (
-            <div className="grid gap-2">
-              <Label htmlFor={field.name}>Year</Label>
-              <Input
-                id={field.name}
-                type="number"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-                placeholder="2026"
+        {/* Year — required and locked to the current year, shown only for
+            YEARLY budgets. MONTHLY budgets recur every month so they never
+            need one; any other year would be invisible everywhere anyway
+            since usage/dashboard views only ever query the current year. */}
+        <form.Subscribe selector={(state) => state.values.period}>
+          {(periodValue) =>
+            periodValue === "YEARLY" && (
+              <form.Field
+                name="year"
+                children={(field) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor={field.name}>Year</Label>
+                    <Input
+                      id={field.name}
+                      type="number"
+                      value={field.state.value}
+                      disabled
+                      readOnly
+                    />
+                  </div>
+                )}
               />
-            </div>
-          )}
-        />
+            )
+          }
+        </form.Subscribe>
 
         {/* Budget Amount */}
         <form.Field
