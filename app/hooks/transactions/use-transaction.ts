@@ -3,16 +3,21 @@ import type { TransactionForm } from "~/lib/types/transaction";
 import { toast } from "sonner";
 import { getToken } from "~/lib/utils/tokenStore";
 
+// Must match TransactionTable's PAGE_SIZE — both sides assume the same
+// page size when computing offset/canNextPage.
+export const TRANSACTIONS_PAGE_SIZE = 10;
+
 export function useGetTransactionById(
   baseApi: string,
   tab: string | undefined,
+  page: number = 0,
 ) {
   const now = new Date();
   const month = tab === "all" ? undefined : now.getMonth() + 1;
   const year = tab === "all" ? undefined : now.getFullYear();
 
   return useQuery({
-    queryKey: ["transactions", tab],
+    queryKey: ["transactions", tab, page],
     queryFn: async () => {
       const token = getToken();
       if (!token) return null;
@@ -20,6 +25,8 @@ export function useGetTransactionById(
       const params = new URLSearchParams();
       if (month) params.set("month", String(month));
       if (year) params.set("year", String(year));
+      params.set("limit", String(TRANSACTIONS_PAGE_SIZE));
+      params.set("offset", String(page * TRANSACTIONS_PAGE_SIZE));
 
       const response = await fetch(
         `${baseApi}/auth/v1/transactions?${params.toString()}`,

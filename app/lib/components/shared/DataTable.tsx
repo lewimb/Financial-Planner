@@ -2,14 +2,16 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { Button } from "~/components/ui/button";
-import { useState } from "react";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "~/components/ui/pagination";
 import { useSearchParams } from "react-router";
 
 import {
@@ -24,38 +26,71 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pageIndex: number;
   pageSize: number;
+  totalCount: number;
   deleteMethod: (id: string) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  pageIndex,
   pageSize,
+  totalCount,
   deleteMethod,
 }: DataTableProps<TData, TValue>) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currIdx = Number(searchParams.get("pagination")) ?? 0;
+  const [, setSearchParams] = useSearchParams();
 
-  const [pagination, setPagination] = useState({
-    pageIndex: currIdx,
-    pageSize: 10,
-  });
-
+  // data is already exactly one server-fetched page — no client-side
+  // re-pagination needed, just render it.
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
-    state: {
-      pagination,
-    },
     meta: {
       deleteMethod,
     },
-    autoResetPageIndex: false,
   });
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const canPreviousPage = pageIndex > 0;
+  const canNextPage = (pageIndex + 1) * pageSize < totalCount;
+
+  const goToPage = (index: number) => {
+    const clamped = Math.min(Math.max(index, 0), totalPages - 1);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("pagination", String(clamped));
+      return next;
+    });
+  };
+
+  // Windowed page numbers around the current page, plus first/last with
+  // ellipses — same pattern as the shadcn Pagination docs/examples.
+  const currentPage = pageIndex + 1;
+  const pageNumbers = (() => {
+    const delta = 1;
+    const range: number[] = [];
+    for (
+      let i = Math.max(1, currentPage - delta);
+      i <= Math.min(totalPages, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+    const pages: (number | "ellipsis")[] = [];
+    if (range[0] > 1) {
+      pages.push(1);
+      if (range[0] > 2) pages.push("ellipsis");
+    }
+    pages.push(...range);
+    if (range[range.length - 1] < totalPages) {
+      if (range[range.length - 1] < totalPages - 1) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  })();
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -105,31 +140,55 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-      <div className="flex items-center justify-end space-x-2 py-4 p-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setSearchParams({ pagination: String(currIdx - 1) });
-            table.previousPage();
-          }}
-          disabled={currIdx === 0 && !table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setSearchParams({ pagination: String(currIdx + 1) });
-            table.nextPage();
-          }}
-          disabled={
-            Math.floor(pageSize / 10) === currIdx && !table.getCanNextPage()
-          }
-        >
-          Next
-        </Button>
+      <div className="py-4 p-2">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (canPreviousPage) goToPage(pageIndex - 1);
+                }}
+                className={
+                  !canPreviousPage ? "pointer-events-none opacity-50" : undefined
+                }
+              />
+            </PaginationItem>
+            {pageNumbers.map((p, i) =>
+              p === "ellipsis" ? (
+                <PaginationItem key={`ellipsis-${i}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href="#"
+                    isActive={p === currentPage}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      goToPage(p - 1);
+                    }}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ),
+            )}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (canNextPage) goToPage(pageIndex + 1);
+                }}
+                className={
+                  !canNextPage ? "pointer-events-none opacity-50" : undefined
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

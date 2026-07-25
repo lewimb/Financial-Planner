@@ -99,7 +99,8 @@ export default function Transaction() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeTab = searchParams.get("tab") ?? "all";
-  const { data, isLoading } = useGetTransactionById(baseApi, activeTab);
+  const page = Number(searchParams.get("pagination") ?? "0") || 0;
+  const { data, isLoading } = useGetTransactionById(baseApi, activeTab, page);
 
   if (isLoading || !data) return <Loading />;
 
@@ -229,6 +230,7 @@ export default function Transaction() {
         deleteMethod={handleDelete}
         totalData={data?.total ?? 0}
         items={data?.data ?? []}
+        pageIndex={page}
       />
     </section>
   );
