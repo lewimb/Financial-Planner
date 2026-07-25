@@ -23,32 +23,26 @@ export async function clientLoader(_: Route.ClientLoaderArgs) {
 
   const baseUrl = import.meta.env.VITE_REACT_BASE_API_URL || "";
   const headers = { Authorization: `Bearer ${token}` };
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
 
-  const safe = async (p: Promise<Response>) => {
-    try {
-      const r = await p;
-      if (r.status === 401) throw redirect("/login");
-      return r.ok ? r.json() : null;
-    } catch (e) {
-      if (e instanceof Response) throw e;
-      return null;
+  // /ai-coach/context bundles health + insights + recommendations from one
+  // consistent snapshot, so the chatbot and these panels never disagree —
+  // three separate fetches could race against a mutation in between.
+  try {
+    const res = await fetch(`${baseUrl}/auth/v1/ai-coach/context`, { headers });
+    if (res.status === 401) throw redirect("/login");
+    if (!res.ok) {
+      return { health: null, insights: null, recommendations: null } satisfies LoaderData;
     }
-  };
-
-  const [health, insights, recommendations] = await Promise.all([
-    safe(fetch(`${baseUrl}/auth/v1/financial-health`, { headers })),
-    safe(fetch(`${baseUrl}/auth/v1/insights?month=${month}&year=${year}`, { headers })),
-    safe(fetch(`${baseUrl}/auth/v1/recommendations`, { headers })),
-  ]);
-
-  return {
-    health: health as FinancialHealthResponse | null,
-    insights: insights as InsightsResponse | null,
-    recommendations: recommendations as RecommendationsResponse | null,
-  } satisfies LoaderData;
+    const body = await res.json();
+    return {
+      health: (body.health as FinancialHealthResponse) ?? null,
+      insights: (body.insights as InsightsResponse) ?? null,
+      recommendations: (body.recommendations as RecommendationsResponse) ?? null,
+    } satisfies LoaderData;
+  } catch (e) {
+    if (e instanceof Response) throw e;
+    return { health: null, insights: null, recommendations: null } satisfies LoaderData;
+  }
 }
 
 export default function AICoach({ loaderData }: Route.ComponentProps) {

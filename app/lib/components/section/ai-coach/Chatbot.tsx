@@ -117,13 +117,17 @@ export function ChatInterface() {
       });
 
       if (response.status === 503) {
+        const body = await response.json().catch(() => null);
+        const content =
+          body?.reason === "overloaded"
+            ? "The AI assistant is receiving a high volume of requests right now. Please try again in a moment."
+            : "AI assistant is currently unavailable. Please try again later.";
         setMessages((prev) => [
           ...prev,
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            content:
-              "AI assistant is currently unavailable. Please try again later.",
+            content,
             timestamp: new Date(),
           },
         ]);
