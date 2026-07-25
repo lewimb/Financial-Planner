@@ -1,6 +1,7 @@
 import { NavLink } from "react-router";
 import { ArrowRight } from "lucide-react";
 import ProgressBar from "../../shared/ProgressBar";
+import { formatRupiah } from "~/lib/utils/currencyFormatter";
 import type { BudgetUsage } from "~/lib/types/budgets";
 
 interface Props {
@@ -29,7 +30,7 @@ export default function DashboardBudgetOverview({ data }: Props) {
               <div className="flex justify-between items-center">
                 <p className="text-sm font-semibold">{item.category}</p>
                 <p className="text-muted-foreground text-sm">
-                  {item.used} / {item.limit}
+                  {formatRupiah(item.used)} / {formatRupiah(item.limit)}
                 </p>
               </div>
               <ProgressBar start={item.used} limit={item.limit} />
