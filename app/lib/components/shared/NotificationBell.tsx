@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, Check, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -55,10 +56,14 @@ export function NotificationBell() {
   async function markAllRead() {
     const token = getToken();
     if (!token) return;
-    await fetch(`${baseApi}/auth/v1/notifications/read-all`, {
+    const res = await fetch(`${baseApi}/auth/v1/notifications/read-all`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      toast.error("Failed to mark notifications as read");
+      return;
+    }
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
   }
@@ -66,10 +71,14 @@ export function NotificationBell() {
   async function markRead(id: number) {
     const token = getToken();
     if (!token) return;
-    await fetch(`${baseApi}/auth/v1/notifications/${id}/read`, {
+    const res = await fetch(`${baseApi}/auth/v1/notifications/${id}/read`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      toast.error("Failed to mark notification as read");
+      return;
+    }
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
@@ -79,10 +88,14 @@ export function NotificationBell() {
   async function deleteNotification(id: number) {
     const token = getToken();
     if (!token) return;
-    await fetch(`${baseApi}/auth/v1/notifications/${id}`, {
+    const res = await fetch(`${baseApi}/auth/v1/notifications/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      toast.error("Failed to delete notification");
+      return;
+    }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     setUnreadCount((c) => Math.max(0, c - 1));
   }
