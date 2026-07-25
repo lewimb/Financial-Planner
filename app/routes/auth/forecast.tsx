@@ -210,6 +210,23 @@ export default function Forecast() {
                   )}
                   {forecast.trend}
                 </p>
+                <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
+                  <span
+                    className={`flex items-center gap-1 ${forecast.trend === "increasing" ? "text-destructive font-semibold" : ""}`}
+                  >
+                    <TrendingUp className="size-3" /> Increasing
+                  </span>
+                  <span
+                    className={`flex items-center gap-1 ${forecast.trend === "decreasing" ? "text-green-600 font-semibold" : ""}`}
+                  >
+                    <TrendingDown className="size-3" /> Decreasing
+                  </span>
+                  <span
+                    className={`flex items-center gap-1 ${forecast.trend === "stable" ? "text-foreground font-semibold" : ""}`}
+                  >
+                    <Minus className="size-3" /> Stable
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
