@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { SettingsProfileForm } from "./SettingsProfileForm";
-import SettingsNotification from "./SettingsNotification";
 import PushNotifications from "./SettingsPushNotifications";
 import { SettingsSecurity } from "./SettingsSecurity";
 import { SettingsDangerZone } from "./SettingsDangerZone";
@@ -51,14 +50,6 @@ export function SettingsTab({ profile, user, notificationPrefs, activity }: Prop
           </Card>
         </TabsContent>
         <TabsContent className="space-y-6" value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Notifications</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <SettingsNotification />
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Push Notifications</CardTitle>
